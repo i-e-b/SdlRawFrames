@@ -44,21 +44,37 @@ int main(int argc, char * argv[])
 
 
     // Try some direct manipulation:
-    char* base = (char*)screenSurface->pixels; // should read the format, but just testing:
+    // should read the format, but just testing.
+    // this assumes RGB888
+    // My first test shows the format is really RGB?8888;
 
-    int size = screenSurface->w * screenSurface->h;
+    char* base = (char*)screenSurface->pixels;
+    int w = screenSurface->w;
+    int h = screenSurface->h;
+    int pixBytes = screenSurface->pitch / screenSurface->w;
 
-    for (size_t i = 0; i < size; i++)
+    cout << "\r\nScreen format: " << SDL_GetPixelFormatName(screenSurface->format->format);
+    cout << "\r\nBytesPerPixel: " << (pixBytes) << ", exact? " << (((screenSurface->pitch % pixBytes) == 0) ? "yes" : "no");
+
+    int size = w * h * pixBytes;
+    for (size_t frame = 0; frame < 5000; frame++)
     {
-        base[i] = 128;
-    }
 
-    //Update the surface -- need to do this every time we write.
-    SDL_UpdateWindowSurface(window);
+        for (size_t i = 0; i < size; i += pixBytes)
+        {
+            char v = (i + frame) % 256;
+            base[i] = v;
+            base[i + 1] = 255 - (v);
+            base[i + 2] = 128;
+        }
+
+        //Update the surface -- need to do this every time we write.
+        SDL_UpdateWindowSurface(window);
+    }
 
 
     //Wait two seconds
-    SDL_Delay(2000);
+    //SDL_Delay(2000);
 
     //Destroy window
     SDL_DestroyWindow(window);
