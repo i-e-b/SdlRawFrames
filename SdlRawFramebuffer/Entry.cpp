@@ -7,6 +7,32 @@ using namespace std;
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
+void BresenhamLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
+{
+    int dx = x1 - x0, sx = x0 < x1 ? 1 : -1;
+    int dy = y1 - y0, sy = y0 < y1 ? 1 : -1;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+
+    int e2, err = (dx > dy ? dx : -dy) / 2;
+    int pixoff = 0;
+
+    for (;;) {
+        // set pixel (hard coded black for now)
+        pixoff = (y0 * rowBytes) + (x0 * 4);
+        data[pixoff] = 0;
+        data[pixoff + 1] = 0;
+        data[pixoff + 2] = 0;
+
+        // end of line check
+        if (x0 == x1 && y0 == y1) break;
+
+        e2 = err;
+        if (e2 > -dx) { err -= dy; x0 += sx; }
+        if (e2 < dy) { err += dx; y0 += sy; }
+    }
+}
+
 int main(int argc, char * argv[])
 {
     //The window we'll be rendering to
@@ -51,7 +77,8 @@ int main(int argc, char * argv[])
     char* base = (char*)screenSurface->pixels;
     int w = screenSurface->w;
     int h = screenSurface->h;
-    int pixBytes = screenSurface->pitch / screenSurface->w;
+    int rowBytes = screenSurface->pitch;
+    int pixBytes = rowBytes / w;
 
     cout << "\r\nScreen format: " << SDL_GetPixelFormatName(screenSurface->format->format);
     cout << "\r\nBytesPerPixel: " << (pixBytes) << ", exact? " << (((screenSurface->pitch % pixBytes) == 0) ? "yes" : "no");
@@ -60,15 +87,19 @@ int main(int argc, char * argv[])
     for (size_t frame = 0; frame < 5000; frame++)
     {
 
-        for (size_t i = 0; i < size; i += pixBytes)
+        // draw a simple gradient
+        for (auto i = 0; i < size; i += pixBytes)
         {
             char v = (i + frame) % 256;
             base[i] = v;
             base[i + 1] = 255 - (v);
-            base[i + 2] = 128;
+            base[i + 2] = (char)128;
         }
 
-        //Update the surface -- need to do this every time we write.
+        // draw a line
+        BresenhamLine(base, rowBytes, 10, 20, 600, 400);
+
+        //Update the surface -- need to do this every frame.
         SDL_UpdateWindowSurface(window);
     }
 
