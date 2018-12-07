@@ -9,8 +9,9 @@ const int SCREEN_HEIGHT = 480;
 
 void CoverageLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
 {
-    int dx = x1 - x0, sx = x0 < x1 ? 1 : -1;
-    int dy = y1 - y0, sy = y0 < y1 ? 1 : -1;
+    int dx = x1 - x0, sx = (dx < 0) ? -1 : 1;
+    int dy = y1 - y0, sy = (dy < 0) ? -1 : 1;
+
     if (dx < 0) dx = -dx;
     if (dy < 0) dy = -dy;
 
@@ -19,19 +20,18 @@ void CoverageLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
     int coverAdj = (dx + dy) / 2;
     
     int pixoff = 0; // pixel as offset from base
-    int v;
-    int ds = (dx > dy ? sy : sx) * 2;
+
+    int grad = 3; // very near vertical -> 1, near horizonal -> 2, near diagonal -> 3
+    if (dx == 0 || (dy / dx) > 8) grad = 1;// more vertical
+    if (dy == 0 || (dx / dy) > 8) grad = 2;// more horizontal
+    int ds = (dx >= dy ? sy : sx) * grad;
 
     int pairoff = (dx > dy ? -rowBytes : 4); // paired pixel for AA, as offset from main pixel.
     int errOff = (dx > dy ? dx + dy : 0); // error adjustment
 
     for (;;) {
         // rough approximation of coverage, based on error
-        v = (err + coverAdj - errOff) / ds;
-
-        // very slight int overshoot?
-        if (v > 128) v = 0;
-        if (v < -128) v = 0;
+        int v = (err + coverAdj - errOff) / ds;
 
         // set pixel (hard coded black for now)
         pixoff = (y0 * rowBytes) + (x0 * 4);
