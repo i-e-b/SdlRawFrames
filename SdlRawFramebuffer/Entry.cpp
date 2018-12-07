@@ -16,26 +16,33 @@ void CoverageLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
 
     int e2, err = 0;
 
-    int coverAdj = (dx > dy ? dx : dy) / 2;
+    int coverAdj = (dx + dy) / 2;
     
-    int pixoff = 0;
+    int pixoff = 0; // pixel as offset from base
     int v;
-    int ds = sx * 2;
+    int ds = (dx > dy ? sy : sx) * 2;
+
+    int pairoff = (dx > dy ? -rowBytes : 4); // paired pixel for AA, as offset from main pixel.
+    int errOff = (dx > dy ? dx + dy : 0); // error adjustment
 
     for (;;) {
-        // SUPER rough approximation of coverage, based on error
-        // only really works for tall lines in this state
-        v = (err + coverAdj) / ds;
+        // rough approximation of coverage, based on error
+        v = (err + coverAdj - errOff) / ds;
+
+        // very slight int overshoot?
+        if (v > 128) v = 0;
+        if (v < -128) v = 0;
 
         // set pixel (hard coded black for now)
-        pixoff = (y0 * rowBytes) + ((x0-1) * 4);
-        data[pixoff] = 128 + v;
+        pixoff = (y0 * rowBytes) + (x0 * 4);
+        data[pixoff + 0] = 128 + v;
         data[pixoff + 1] = 128 + v;
         data[pixoff + 2] = 128 + v;
 
-        data[pixoff + 4] = 128 - v;
-        data[pixoff + 5] = 128 - v;
-        data[pixoff + 6] = 128 - v;
+        pixoff += pairoff;
+        data[pixoff + 0] = 128 - v;
+        data[pixoff + 1] = 128 - v;
+        data[pixoff + 2] = 128 - v;
 
         // end of line check
         if (x0 == x1 && y0 == y1) break;
@@ -110,8 +117,7 @@ int main(int argc, char * argv[])
 
     // Try some direct manipulation:
     // should read the format, but just testing.
-    // this assumes RGB888
-    // My first test shows the format is really RGB?8888;
+    // this shows RGB888, but test shows the format is really RGBx8888;
 
     char* base = (char*)screenSurface->pixels;
     int w = screenSurface->w;
@@ -134,9 +140,9 @@ int main(int argc, char * argv[])
         {
             base[i] = 255;base[i + 1] = 255;base[i + 2] = 255;
         }
-
+        /*
         // draw an animated gradient
-        /*for (auto i = 0; i < size; i += pixBytes)
+        for (auto i = 0; i < size; i += pixBytes)
         {
             char v = (i + frame) % 256;
             base[i] = v;
@@ -144,16 +150,17 @@ int main(int argc, char * argv[])
             base[i + 2] = (char)128;
         }*/
 
-        // draw some lines
-        BresenhamLine(base, rowBytes, 10, 20, 600, 400);
-        BresenhamLine(base, rowBytes, 30, 20, 600, 25);
+        // draw a test star of lines
+        for (int n = 10; n < 600; n += 15)
+        {
+            CoverageLine(base, rowBytes, 320, 240, n, 10);
+            CoverageLine(base, rowBytes, 320, 240, n, 470);
 
-        BresenhamLine(base, rowBytes, 20, 10, 25, 400);
+            if (n > 470) continue;
 
-        CoverageLine(base, rowBytes, 30, 10, 31, 400); // very small dx/dy
-        CoverageLine(base, rowBytes, 50, 10, 35, 400); // reverse gradient
-        CoverageLine(base, rowBytes, 50, 10, 150, 400); // steeper
-        CoverageLine(base, rowBytes, 30, 50, 600, 55); // flat line (not working yet)
+            CoverageLine(base, rowBytes, 320, 240, 10, n);
+            CoverageLine(base, rowBytes, 320, 240, 610, n);
+        }
 
         //Update the surface -- need to do this every frame.
         SDL_UpdateWindowSurface(window);
