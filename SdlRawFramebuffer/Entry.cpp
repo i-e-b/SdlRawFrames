@@ -2,12 +2,17 @@
 #include <SDL.h>
 using namespace std;
 
+#define BYTE unsigned char
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-void CoverageLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
+void CoverageLine(
+    BYTE* data, int rowBytes,        // target buffer
+    int x0, int y0, int x1, int y1,  // line coords
+    BYTE r, BYTE g, BYTE b           // draw color
+)
 {
     int dx = x1 - x0, sx = (dx < 0) ? -1 : 1;
     int dy = y1 - y0, sy = (dy < 0) ? -1 : 1;
@@ -19,30 +24,33 @@ void CoverageLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
 
     int coverAdj = (dx + dy) / 2;
     
-    int pixoff = 0; // pixel as offset from base
+    int pixoff = 0; // target pixel as byte offset from base
+    int ds = (dx >= dy ? sy : sx); // error sign
 
-    int grad = 3; // very near vertical -> 1, near horizonal -> 2, near diagonal -> 3
-    if (dx == 0 || (dy / dx) > 8) grad = 1;// more vertical
-    if (dy == 0 || (dx / dy) > 8) grad = 2;// more horizontal
-    int ds = (dx >= dy ? sy : sx) * grad;
-
-    int pairoff = (dx > dy ? -rowBytes : 4); // paired pixel for AA, as offset from main pixel.
+    int pairoff = (dx > dy ? -rowBytes : 4); // paired pixel for AA, as byte offset from main pixel.
     int errOff = (dx > dy ? dx + dy : 0); // error adjustment
 
     for (;;) {
         // rough approximation of coverage, based on error
-        int v = (err + coverAdj - errOff) / ds;
+        int v = (err + coverAdj - errOff) * ds;
+        if (v > 127) v = 127;
+        if (v < -127) v = -127;
+        int lv = 127 + v;
+        int rv = 127 - v;
 
-        // set pixel (hard coded black for now)
+        // set pixel, mixing original colour with target colour
         pixoff = (y0 * rowBytes) + (x0 * 4);
-        data[pixoff + 0] = 128 + v;
-        data[pixoff + 1] = 128 + v;
-        data[pixoff + 2] = 128 + v;
+
+        data[pixoff + 0] = ((data[pixoff + 0] * lv) >> 8) + ((r * rv) >> 8);
+        data[pixoff + 1] = ((data[pixoff + 1] * lv) >> 8) + ((g * rv) >> 8);
+        data[pixoff + 2] = ((data[pixoff + 2] * lv) >> 8) + ((b * rv) >> 8);
 
         pixoff += pairoff;
-        data[pixoff + 0] = 128 - v;
-        data[pixoff + 1] = 128 - v;
-        data[pixoff + 2] = 128 - v;
+
+        data[pixoff + 0] = ((data[pixoff + 0] * rv) >> 8) + ((r * lv) >> 8);
+        data[pixoff + 1] = ((data[pixoff + 1] * rv) >> 8) + ((g * lv) >> 8);
+        data[pixoff + 2] = ((data[pixoff + 2] * rv) >> 8) + ((b * lv) >> 8);
+
 
         // end of line check
         if (x0 == x1 && y0 == y1) break;
@@ -53,7 +61,7 @@ void CoverageLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
     }
 }
 
-void BresenhamLine(char* data, int rowBytes, int x0, int y0, int x1, int y1)
+void BresenhamLine(BYTE* data, int rowBytes, int x0, int y0, int x1, int y1)
 {
     int dx = x1 - x0, sx = x0 < x1 ? 1 : -1;
     int dy = y1 - y0, sy = y0 < y1 ? 1 : -1;
@@ -119,7 +127,7 @@ int main(int argc, char * argv[])
     // should read the format, but just testing.
     // this shows RGB888, but test shows the format is really RGBx8888;
 
-    char* base = (char*)screenSurface->pixels;
+    BYTE* base = (BYTE*)screenSurface->pixels;
     int w = screenSurface->w;
     int h = screenSurface->h;
     int rowBytes = screenSurface->pitch;
@@ -129,43 +137,40 @@ int main(int argc, char * argv[])
     cout << "\r\nBytesPerPixel: " << (pixBytes) << ", exact? " << (((screenSurface->pitch % pixBytes) == 0) ? "yes" : "no");
 
     int size = w * h * pixBytes;
-    int animationFrames = 1;
+    int animationFrames = 5000;
 
+    // Used to calculate the frames per second
+    long startTicks = SDL_GetTicks();
     for (size_t frame = 0; frame < animationFrames; frame++)
     {
-
-
-        // clear to white
-        for (auto i = 0; i < size; i += pixBytes)
-        {
-            base[i] = 255;base[i + 1] = 255;base[i + 2] = 255;
-        }
-        /*
         // draw an animated gradient
         for (auto i = 0; i < size; i += pixBytes)
         {
-            char v = (i + frame) % 256;
+            BYTE v = (i + frame) % 256;
             base[i] = v;
             base[i + 1] = 255 - (v);
-            base[i + 2] = (char)128;
-        }*/
+            base[i + 2] = (BYTE)128;
+        }
 
         // draw a test star of lines
         for (int n = 10; n < 600; n += 15)
         {
-            CoverageLine(base, rowBytes, 320, 240, n, 10);
-            CoverageLine(base, rowBytes, 320, 240, n, 470);
+            CoverageLine(base, rowBytes, 320, 240, n, 10,    /* */  255, 0, 0);
+            CoverageLine(base, rowBytes, 320, 240, n, 470,   /* */  0, 0, 255);
 
-            if (n > 470) continue;
+            if (n > 460) continue;
 
-            CoverageLine(base, rowBytes, 320, 240, 10, n);
-            CoverageLine(base, rowBytes, 320, 240, 610, n);
+            CoverageLine(base, rowBytes, 320, 240, 10, n + 10,    /* */ 0,0,0);
+            CoverageLine(base, rowBytes, 320, 240, 610, n + 10,   /* */ 0,0,0);
         }
 
         //Update the surface -- need to do this every frame.
         SDL_UpdateWindowSurface(window);
     }
 
+    long endTicks = SDL_GetTicks();
+    float avgFPS = animationFrames / ((endTicks - startTicks) / 1000.f);
+    cout << "\r\nFPS ave = " << avgFPS;
 
     //Wait two seconds
     //SDL_Delay(2000);
