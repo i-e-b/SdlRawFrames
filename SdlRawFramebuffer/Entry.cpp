@@ -20,15 +20,15 @@ void CoverageLine(
     if (dx < 0) dx = -dx;
     if (dy < 0) dy = -dy;
 
-    int e2, err = 0;
 
-    int coverAdj = (dx + dy) / 2;
-    
-    int pixoff = 0; // target pixel as byte offset from base
-    int ds = (dx >= dy ? sy : sx); // error sign
+    int pixoff; // target pixel as byte offset from base
 
     int pairoff = (dx > dy ? -rowBytes : 4); // paired pixel for AA, as byte offset from main pixel.
-    int errOff = (dx > dy ? dx + dy : 0); // error adjustment
+
+    int coverAdj = (dx + dy) / 2;            // to adjust `err` so it's centred over 0
+    int e2, err = 0;                         // running error (and temp)
+    int ds = (dx >= dy ? sy : sx);           // error sign
+    int errOff = (dx > dy ? dx + dy : 0);    // error adjustment
 
     for (;;) {
         // rough approximation of coverage, based on error
@@ -59,6 +59,12 @@ void CoverageLine(
         if (e2 > -dx) { err -= dy; x0 += sx; }
         if (e2 < dy) { err += dx; y0 += sy; }
     }
+}
+
+inline BYTE Clamp127(int n)
+{
+    n = n > 127 ? 127 : n;
+    return n < -127 ? -127 : n;
 }
 
 void BresenhamLine(BYTE* data, int rowBytes, int x0, int y0, int x1, int y1)
@@ -146,10 +152,9 @@ int main(int argc, char * argv[])
         // draw an animated gradient
         for (auto i = 0; i < size; i += pixBytes)
         {
-            BYTE v = (i + frame) % 256;
-            base[i] = v;
-            base[i + 1] = 255 - (v);
-            base[i + 2] = (BYTE)128;
+            base[i] = frame;// (i + frame) % 256;
+            base[i + 1] = i;// ((i * 2) + frame) % 256;
+            base[i + 2] = i + frame;// ((i * 3) + frame) % 256;
         }
 
         // draw a test star of lines
