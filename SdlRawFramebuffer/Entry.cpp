@@ -1,97 +1,13 @@
+#include "ImmediateDraw.h"
+
 #include <iostream>
 #include <SDL.h>
 using namespace std;
-
-#define BYTE unsigned char
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-void CoverageLine(
-    BYTE* data, int rowBytes,        // target buffer
-    int x0, int y0, int x1, int y1,  // line coords
-    BYTE r, BYTE g, BYTE b           // draw color
-)
-{
-    int dx = x1 - x0, sx = (dx < 0) ? -1 : 1;
-    int dy = y1 - y0, sy = (dy < 0) ? -1 : 1;
-
-    if (dx < 0) dx = -dx;
-    if (dy < 0) dy = -dy;
-
-
-    int pixoff; // target pixel as byte offset from base
-
-    int pairoff = (dx > dy ? -rowBytes : 4); // paired pixel for AA, as byte offset from main pixel.
-
-    int coverAdj = (dx + dy) / 2;            // to adjust `err` so it's centred over 0
-    int e2, err = 0;                         // running error (and temp)
-    int ds = (dx >= dy ? sy : sx);           // error sign
-    int errOff = (dx > dy ? dx + dy : 0);    // error adjustment
-
-    for (;;) {
-        // rough approximation of coverage, based on error
-        int v = (err + coverAdj - errOff) * ds;
-        if (v > 127) v = 127;
-        if (v < -127) v = -127;
-        int lv = 127 + v;
-        int rv = 127 - v;
-
-        // set pixel, mixing original colour with target colour
-        pixoff = (y0 * rowBytes) + (x0 * 4);
-
-        data[pixoff + 0] = ((data[pixoff + 0] * lv) >> 8) + ((r * rv) >> 8);
-        data[pixoff + 1] = ((data[pixoff + 1] * lv) >> 8) + ((g * rv) >> 8);
-        data[pixoff + 2] = ((data[pixoff + 2] * lv) >> 8) + ((b * rv) >> 8);
-
-        pixoff += pairoff;
-
-        data[pixoff + 0] = ((data[pixoff + 0] * rv) >> 8) + ((r * lv) >> 8);
-        data[pixoff + 1] = ((data[pixoff + 1] * rv) >> 8) + ((g * lv) >> 8);
-        data[pixoff + 2] = ((data[pixoff + 2] * rv) >> 8) + ((b * lv) >> 8);
-
-
-        // end of line check
-        if (x0 == x1 && y0 == y1) break;
-
-        e2 = err;
-        if (e2 > -dx) { err -= dy; x0 += sx; }
-        if (e2 < dy) { err += dx; y0 += sy; }
-    }
-}
-
-inline BYTE Clamp127(int n)
-{
-    n = n > 127 ? 127 : n;
-    return n < -127 ? -127 : n;
-}
-
-void BresenhamLine(BYTE* data, int rowBytes, int x0, int y0, int x1, int y1)
-{
-    int dx = x1 - x0, sx = x0 < x1 ? 1 : -1;
-    int dy = y1 - y0, sy = y0 < y1 ? 1 : -1;
-    if (dx < 0) dx = -dx;
-    if (dy < 0) dy = -dy;
-
-    int e2, err = (dx > dy ? dx : -dy) / 2;
-    int pixoff = 0;
-
-    for (;;) {
-        // set pixel (hard coded black for now)
-        pixoff = (y0 * rowBytes) + (x0 * 4);
-        data[pixoff] = 0;
-        data[pixoff + 1] = 0;
-        data[pixoff + 2] = 0;
-
-        // end of line check
-        if (x0 == x1 && y0 == y1) break;
-
-        e2 = err;
-        if (e2 > -dx) { err -= dy; x0 += sx; }
-        if (e2 < dy) { err += dx; y0 += sy; }
-    }
-}
 
 int main(int argc, char * argv[])
 {
@@ -143,45 +59,54 @@ int main(int argc, char * argv[])
     cout << "\r\nBytesPerPixel: " << (pixBytes) << ", exact? " << (((screenSurface->pitch % pixBytes) == 0) ? "yes" : "no");
 
     int size = w * h * pixBytes;
-    int animationFrames = 5000;
+    int animationFrames =  500;
 
     // Used to calculate the frames per second
     long startTicks = SDL_GetTicks();
-    for (size_t frame = 0; frame < animationFrames; frame++)
+    for (auto frame = 0; frame < animationFrames; frame++)
     {
+        long fst = SDL_GetTicks();
+
         // draw an animated gradient
         for (auto i = 0; i < size; i += pixBytes)
         {
-            base[i] = frame;// (i + frame) % 256;
-            base[i + 1] = i;// ((i * 2) + frame) % 256;
-            base[i + 2] = i + frame;// ((i * 3) + frame) % 256;
+            base[i] = 255;// frame;
+            base[i + 1] = 255;// i;
+            base[i + 2] = 255;// i + frame;
         }
 
         // draw a test star of lines
         for (int n = 10; n < 600; n += 15)
         {
-            CoverageLine(base, rowBytes, 320, 240, n, 10,    /* */  255, 0, 0);
-            CoverageLine(base, rowBytes, 320, 240, n, 470,   /* */  0, 0, 255);
+            auto na = n + (frame % 15);
+            CoverageLine(base, rowBytes, 320, 240, na, 10,    /* */  255, 0, 0);
+            CoverageLine(base, rowBytes, 320, 240, na, 470,   /* */  0, 0, 255);
 
-            if (n > 460) continue;
+            if (na > 470) continue;
 
-            CoverageLine(base, rowBytes, 320, 240, 10, n + 10,    /* */ 0,0,0);
-            CoverageLine(base, rowBytes, 320, 240, 610, n + 10,   /* */ 0,0,0);
+            CoverageLine(base, rowBytes, 320, 240, 10, na,    /* */ 0,0,0);
+            CoverageLine(base, rowBytes, 320, 240, 610, na,   /* */ 0,0,0);
         }
 
         //Update the surface -- need to do this every frame.
         SDL_UpdateWindowSurface(window);
+        SDL_PumpEvents(); // Keep Win32 happy
+        long ftime = (SDL_GetTicks() - fst);
+        if (ftime < 15) SDL_Delay(15 - ftime);
     }
 
     long endTicks = SDL_GetTicks();
     float avgFPS = animationFrames / ((endTicks - startTicks) / 1000.f);
     cout << "\r\nFPS ave = " << avgFPS;
 
-    //Wait two seconds
-    //SDL_Delay(2000);
-    cout << "\r\nDone. Press enter.\r\n";
-    char c;
-    cin.get(c);
+    // Wait for window to be closed
+    SDL_Event close_event;
+    while (SDL_WaitEvent(&close_event)) {
+        if (close_event.type == SDL_QUIT) {
+            break;
+        }
+    }
+
 
     // Close up shop
     SDL_DestroyWindow(window);

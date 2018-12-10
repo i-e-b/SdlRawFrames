@@ -126,11 +126,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Entry.cpp" />
+    <ClCompile Include="ImmediateDraw.cpp" />
+    <ClCompile Include="ScanBufferDraw.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2.lib" />
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2main.lib" />
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2test.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ImmediateDraw.h" />
+    <ClInclude Include="ScanBufferDraw.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

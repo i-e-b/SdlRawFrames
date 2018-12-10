@@ -18,10 +18,24 @@
     <ClCompile Include="Entry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImmediateDraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanBufferDraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2.lib" />
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2main.lib" />
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2test.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ImmediateDraw.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanBufferDraw.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
