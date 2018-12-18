@@ -125,6 +125,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BinHeap.cpp" />
     <ClCompile Include="Entry.cpp" />
     <ClCompile Include="ImmediateDraw.cpp" />
     <ClCompile Include="ScanBufferDraw.cpp" />
@@ -135,6 +136,7 @@
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2test.lib" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BinHeap.h" />
     <ClInclude Include="ImmediateDraw.h" />
     <ClInclude Include="ScanBufferDraw.h" />
   </ItemGroup>

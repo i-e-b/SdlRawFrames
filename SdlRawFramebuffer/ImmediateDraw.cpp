@@ -39,15 +39,15 @@ void CoverageLine(
         pixoff = (y0 * rowBytes) + (x0 * 4);
 
         //                 [ existing colour mix        ]   [ line colour mix ]
-        data[pixoff + 0] = ((data[pixoff + 0] * lv) >> 8) + ((r * rv) >> 8);
+        data[pixoff + 0] = ((data[pixoff + 0] * lv) >> 8) + ((b * rv) >> 8);
         data[pixoff + 1] = ((data[pixoff + 1] * lv) >> 8) + ((g * rv) >> 8);
-        data[pixoff + 2] = ((data[pixoff + 2] * lv) >> 8) + ((b * rv) >> 8);
+        data[pixoff + 2] = ((data[pixoff + 2] * lv) >> 8) + ((r * rv) >> 8);
 
         pixoff += pairoff; // switch to the 'other' pixel
 
-        data[pixoff + 0] = ((data[pixoff + 0] * rv) >> 8) + ((r * lv) >> 8);
+        data[pixoff + 0] = ((data[pixoff + 0] * rv) >> 8) + ((b * lv) >> 8);
         data[pixoff + 1] = ((data[pixoff + 1] * rv) >> 8) + ((g * lv) >> 8);
-        data[pixoff + 2] = ((data[pixoff + 2] * rv) >> 8) + ((b * lv) >> 8);
+        data[pixoff + 2] = ((data[pixoff + 2] * rv) >> 8) + ((r * lv) >> 8);
 
 
         // end of line check

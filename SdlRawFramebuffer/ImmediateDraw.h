@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef BYTE
 #define BYTE unsigned char
+#endif
 
 // Functions for drawing to the frame buffer directly
 

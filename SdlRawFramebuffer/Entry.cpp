@@ -1,4 +1,5 @@
 #include "ImmediateDraw.h"
+#include "ScanBufferDraw.h"
 
 #include <iostream>
 #include <SDL.h>
@@ -61,8 +62,11 @@ int main(int argc, char * argv[])
     int size = w * h * pixBytes;
     int animationFrames =  500;
 
+    auto scanBuf = InitScanBuffer(w, h);
+
     // Used to calculate the frames per second
     long startTicks = SDL_GetTicks();
+    long idleTime = 0;
     for (auto frame = 0; frame < animationFrames; frame++)
     {
         long fst = SDL_GetTicks();
@@ -75,29 +79,44 @@ int main(int argc, char * argv[])
             base[i + 2] = 255;// i + frame;
         }
 
-        // draw a test star of lines
-        for (int n = 10; n < 600; n += 15)
+        // draw a test star of lines using immediate mode
+        for (int n = 10; n < 300; n += 10)
         {
-            auto na = n + (frame % 15);
-            CoverageLine(base, rowBytes, 320, 240, na, 10,    /* */  255, 0, 0);
-            CoverageLine(base, rowBytes, 320, 240, na, 470,   /* */  0, 0, 255);
+            auto na = n + (frame % 10);
+            CoverageLine(base, rowBytes, 150, 150, na, 5,     /* */  255, 0, 0);   // red lines at top
+            CoverageLine(base, rowBytes, 150, 150, na, 300,   /* */  0,   0, 255); // blue lines at bottom
 
-            if (na > 470) continue;
-
-            CoverageLine(base, rowBytes, 320, 240, 10, na,    /* */ 0,0,0);
-            CoverageLine(base, rowBytes, 320, 240, 610, na,   /* */ 0,0,0);
+            CoverageLine(base, rowBytes, 150, 150, 5,   na,   /* */  0,0,0); // black lines at the sides
+            CoverageLine(base, rowBytes, 150, 150, 300, na,   /* */  0,0,0);
         }
+
+        // Test draw with the scan buffer
+        FillTrangle(scanBuf,
+            430, 170,
+            430, 130,
+            470, 150,
+            10,
+            0, 0, 0); // black
+
+        RenderBuffer(scanBuf, base, rowBytes,
+            /*left*/ 310, /*top*/ 10, /*right*/ 610, /*bottom*/ 400   // area of target buffer to fill
+        );
+        ClearScanBuffer(scanBuf); // wipe out buffer
 
         //Update the surface -- need to do this every frame.
         SDL_UpdateWindowSurface(window);
         SDL_PumpEvents(); // Keep Win32 happy
         long ftime = (SDL_GetTicks() - fst);
         if (ftime < 15) SDL_Delay(15 - ftime);
+        idleTime += 15 - ftime; // indication of how much slack we have
     }
+
+    FreeScanBuffer(scanBuf);
 
     long endTicks = SDL_GetTicks();
     float avgFPS = animationFrames / ((endTicks - startTicks) / 1000.f);
-    cout << "\r\nFPS ave = " << avgFPS;
+    float idleFraction = idleTime / (15.f*animationFrames);
+    cout << "\r\nFPS ave = " << avgFPS << "\r\nIdle % = " << (100 * idleFraction);
 
     // Wait for window to be closed
     SDL_Event close_event;
