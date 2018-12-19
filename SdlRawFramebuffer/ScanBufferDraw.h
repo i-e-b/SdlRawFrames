@@ -14,8 +14,8 @@
 typedef struct SwitchPoint {
     uint16_t id;                // itemCount when this point was drawn, the object ID (limit of 65k objects per frame)
     uint32_t pos;               // position of switch-point, as (y*width)+x;
-    uint32_t material : 24;     // RGB (24 bit of color). Could also be used to look up a texture or other style later.
-    uint32_t meta     : 8;      // metadata/flags.
+    uint32_t material;          // RGB (24 bit of color). Could also be used to look up a texture or other style later.
+    uint8_t meta;               // metadata/flags.
                                 // 0x01: set = 'on' point, unset = 'off' point
 } SwitchPoint;
 
@@ -28,6 +28,7 @@ typedef struct ScanBuffer {
     int count;          // number of items in the array
     int length;         // memory length of the array
     SwitchPoint *list;  // array of switch points. When drawing to the buffer, we can just append. Before rendering, this must be sorted by abs(pos)
+    void *heap;         // internal heap for depth sorting
 } ScanBuffer;
 
 ScanBuffer *InitScanBuffer(int width, int height);
@@ -52,9 +53,9 @@ void ClearScanBuffer(ScanBuffer *buf);
 // This can be done on a different processor core from other draw commands to spread the load
 // Do not draw to a buffer while it is rendering (switch buffers if you need to)
 void RenderBuffer(
-    ScanBuffer *buf,                           // source scan buffer
-    BYTE* data, int rowBytes,                  // target frame-buffer
-    int left, int top, int right, int bottom   // area of target buffer to fill
+    ScanBuffer *buf,             // source scan buffer
+    BYTE* data, int rowBytes,    // target frame-buffer
+    int bufSize                  // size of target buffer
 );
 
 

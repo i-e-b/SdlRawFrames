@@ -45,7 +45,6 @@ int main(int argc, char * argv[])
     //Update the surface
     SDL_UpdateWindowSurface(window);
 
-
     // Try some direct manipulation:
     // should read the format, but just testing.
     // this shows RGB888, but test shows the format is really RGBx8888;
@@ -83,11 +82,11 @@ int main(int argc, char * argv[])
         for (int n = 10; n < 300; n += 10)
         {
             auto na = n + (frame % 10);
-            CoverageLine(base, rowBytes, 150, 150, na, 5,     /* */  255, 0, 0);   // red lines at top
-            CoverageLine(base, rowBytes, 150, 150, na, 300,   /* */  0,   0, 255); // blue lines at bottom
+            CoverageLine(base, rowBytes, 150, 150, na, 5,       255, 0, 0);   // red lines at top
+            CoverageLine(base, rowBytes, 150, 150, na, 300,     0,   0, 255); // blue lines at bottom
 
-            CoverageLine(base, rowBytes, 150, 150, 5,   na,   /* */  0,0,0); // black lines at the sides
-            CoverageLine(base, rowBytes, 150, 150, 300, na,   /* */  0,0,0);
+            CoverageLine(base, rowBytes, 150, 150, 5,   na,     0,0,0); // black lines at the sides
+            CoverageLine(base, rowBytes, 150, 150, 300, na,     0,0,0);
         }
 
         // Test draw with the scan buffer
@@ -96,11 +95,16 @@ int main(int argc, char * argv[])
             430, 130,
             470, 150,
             10,
+            frame*4, frame*2, frame); // rainbow
+
+        FillTrangle(scanBuf,
+            450, 300,
+            450, 100,
+            550, 250,
+            5,
             0, 0, 0); // black
 
-        RenderBuffer(scanBuf, base, rowBytes,
-            /*left*/ 310, /*top*/ 10, /*right*/ 610, /*bottom*/ 400   // area of target buffer to fill
-        );
+        RenderBuffer(scanBuf, base, rowBytes, size);
         ClearScanBuffer(scanBuf); // wipe out buffer
 
         //Update the surface -- need to do this every frame.

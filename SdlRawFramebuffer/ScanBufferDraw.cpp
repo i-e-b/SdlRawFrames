@@ -1,4 +1,5 @@
 #include "ScanBufferDraw.h"
+#include "BinHeap.h"
 #include <stdlib.h>
 
 #include <iostream>
@@ -19,6 +20,11 @@ ScanBuffer * InitScanBuffer(int width, int height)
         free(buf); return NULL;
     }
 
+    buf->heap = Initialize(10);
+    if (buf->heap == NULL) {
+        free(buf->list);
+    }
+
     buf->itemCount = 0;
     buf->count = 0;
     buf->length = sizeEstimate;
@@ -32,6 +38,7 @@ void FreeScanBuffer(ScanBuffer * buf)
 {
     if (buf == NULL) return;
     if (buf->list != NULL) free(buf->list);
+    if (buf->heap != NULL) Destroy((PriorityQueue)buf->heap);
     free(buf);
 }
 
@@ -54,41 +61,45 @@ void SetLine(
     float grad; // probably good enough on raspi, but might do with fixed-point
     int h = buf->height;
     int w = buf->width;
-    uint32_t flags;
+    uint8_t flags;
+    int adj; // 'off' pixels are pushed 1 to the right
 
-    if (y0 == y1) return; // no scanlines would be affected
+    if (y0 == y1) {
+        return; // no scanlines would be affected
+    }
     if (y0 < y1) { // going down
         flags = 0x00; // 'off' line
-        upper = (y0 < 0) ? 0 : y0;
-        lower = (y1 > h) ? h : y1;
+        upper = (y1 < 0) ? 0 : y1;
+        lower = (y0 > h) ? h : y0;
         left = x0;
+        adj = 1;
         grad = (float)(x1 - x0) / (float)(y1 - y0);
     } else { // going up
         flags = 0x01; // 'on' line
         upper = (y0 < 0) ? 0 : y0;
         lower = (y1 > h) ? h : y1;
         left = x0;
-        grad = (float)(x1 - x0) / (float)(y1 - y0);
+        adj = 0;
+        grad = (float)(x1 - x0) / (float)(y0 - y1);
     }
 
     uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
 
-    int needed = lower - upper;
+    int needed = upper - lower;
     int remains = buf->length - buf->count;
     if (needed > remains) GrowBuffer(buf);
-    int yoffs = upper - y0; //???
 
     for (auto i = 0; i <= needed; i++)
     {
         // add a point.
-        auto ox = (grad * (i + yoffs)) + x0;
-        uint32_t addr = ((i + upper)*w) + ox;
+        auto ox = (grad * i) + x0;
+        uint32_t addr = ((i + lower)*w) + ox + adj;
 
         SwitchPoint sp;
         sp.id = buf->itemCount;
         sp.pos = addr;
         sp.material = color;
-        sp.meta = flags;// 0x01: set = 'on' point, unset = 'off' point
+        sp.meta = flags;
 
         buf->list[buf->count] = sp;
         buf->count++;
@@ -164,9 +175,9 @@ void InPlaceSort(SwitchPoint *list, int left, int right)
 // This can be done on a different processor core from other draw commands to spread the load
 // Do not draw to a buffer while it is rendering (switch buffers if you need to)
 void RenderBuffer(
-    ScanBuffer *buf,                           // source scan buffer
-    BYTE* data, int rowBytes,                  // target frame-buffer
-    int left, int top, int right, int bottom   // area of target buffer to fill
+    ScanBuffer *buf,             // source scan buffer
+    BYTE* data, int rowBytes,    // target frame-buffer
+    int bufSize                  // size of target buffer
 ) {
     if (buf == NULL || data == NULL) return;
 
@@ -174,51 +185,58 @@ void RenderBuffer(
     //       run through all the pixels (ignoring on/off and z-depth) rendering dumbly.
     //       maybe also have a specialised version that doesn't have the target area.
 
+    InPlaceSort(buf->list, 0, buf->count);
     auto list = buf->list;
     auto count = buf->count; // this might need updating after sort/split
-    InPlaceSort(list, 0, count);
-
-    int dataTop = top * rowBytes;
-    int dataBot = bottom * rowBytes;
-    int dataLeft = left * 4;
-    int dataRight = right * 4;
     
-    // Temp -- just draw between ON and OFF
-    // we scan through the sorted list to find a point where the position switches from before current to after current.
-    // we then count how many pixel until next switch
-    // then we loop, writing those pixels (if we're inside the mask region)
-    // in regions where there is no fill defined, we don't update the existing pixel buffer (transparent)
+    int end = bufSize / 4; // end of data in 32bit words
 
-    auto cur_pos = dataTop + dataLeft;
-    auto end_pos = dataBot + dataRight;
-    /*
-    while (cur_pos < end_pos) {
-        auto idx_prev = LastIndexBefore(list, cur_pos, count);
-        auto idx_next = FirstIndexAfter(list, cur_pos, count);
-
-        if (idx_prev < 0.........
-
-        SwitchPoint pl = list[.........];
-        auto stop = cur_pos + (idx_next - idx_......);
-
-        for (int i = cur_pos; i < stop; i++)
-        {
-            ......
-        }
-    }*/
-
-    
-    for (int y = dataTop; y < dataBot; y+= rowBytes)
+    bool on = false;
+    int p = 0; // current pixel
+    uint32_t color;
+    for (int i = 0; i < count; i++)
     {
-        for (int x = dataLeft; x < dataRight; x+=4)
+        SwitchPoint sw = list[i];
+
+        if (sw.pos > p) {
+            if (on) {
+                for (; p < sw.pos; p++)
+                {
+                    if (p >= end) return;
+                    ((uint32_t*)data)[p] = color;
+                }
+            } else p = sw.pos;
+        }
+        on = sw.meta == 0x01;
+        color = sw.material;
+
+#if 0
+        // DEBUG: show switch point in black
+        int pixoff = ((sw.pos - 1) * 4);
+        if (pixoff > 0) { data[pixoff + 0] = data[pixoff + 1] = data[pixoff + 2] = 0; }
+        // END
+#endif
+    }
+
+    if (on) { // fill to end of data
+        for (; p < end; p++)
         {
-            // for initial testing, just draw a color
-            auto pixoff = y + x;
-            data[pixoff + 0] = 200; // b
-            data[pixoff + 1] = 70;  // g
-            data[pixoff + 2] = 128; // r
+            ((uint32_t*)data)[p] = color;
         }
     }
+
+    /*
+        Insert(ElementType{2, 200}, heap);
+        Insert(ElementType{20, 2000}, heap);
+        Insert(ElementType{3, 300}, heap);
+        Insert(ElementType{1, 100}, heap);
+        Insert(ElementType{15, 1500}, heap);
+
+        while (!IsEmpty(heap)) {
+            ElementType tmp = DeleteMin(heap);
+            cout << "Found depth = " << tmp.depth << ", idx = " << tmp.index << ";\r\n";
+        }
+        */
 }
 
 // NOTES:

@@ -18,7 +18,7 @@ PriorityQueue Initialize(int MaxElements) {
     if (MaxElements < MinPQSize)
         return NULL;// Error("Priority queue size is too small");
     
-    H = (PriorityQueue)malloc(sizeof(struct HeapStruct));
+    H = (PriorityQueue) malloc(sizeof(struct HeapStruct));
     
     if (H == NULL) return NULL;// Error("Out of space!!!");
     
@@ -33,7 +33,7 @@ PriorityQueue Initialize(int MaxElements) {
 
     H->Capacity = MaxElements;
     H->Size = 0;
-    H->Elements[0] = MinData;
+    H->Elements[0].depth = MinData;
 
     return H;
 }
@@ -52,7 +52,7 @@ void Insert(ElementType X, PriorityQueue H) {
 
     int i;
 
-    for (i = ++H->Size; H->Elements[i / 2] > X; i /= 2) {
+    for (i = ++H->Size; H->Elements[i / 2].depth > X.depth; i /= 2) {
         H->Elements[i] = H->Elements[i / 2];
     }
 
@@ -73,10 +73,10 @@ ElementType DeleteMin(PriorityQueue H) {
     for (i = 1; i * 2 <= H->Size; i = Child) {
         /* Find smaller child */
         Child = i * 2;
-        if (Child != H->Size && H->Elements[Child + 1] < H->Elements[Child]) Child++;
+        if (Child != H->Size && H->Elements[Child + 1].depth < H->Elements[Child].depth) Child++;
 
         /* Percolate one level */
-        if (LastElement > H->Elements[Child]) H->Elements[i] = H->Elements[Child];
+        if (LastElement.depth > H->Elements[Child].depth) H->Elements[i] = H->Elements[Child];
         else break;
     }
     H->Elements[i] = LastElement;
