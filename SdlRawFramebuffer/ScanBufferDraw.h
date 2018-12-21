@@ -38,16 +38,15 @@ void FreeScanBuffer(ScanBuffer *buf);
 
 // Fill a triagle with a solid colour
 // Triangle must be clockwise winding
-void FillTrangle(
-    ScanBuffer *buf,
+void FillTrangle( ScanBuffer *buf,
     int x0, int y0, 
     int x1, int y1,
     int x2, int y2,
     int z,
     int r, int g, int b);
 
-void SetBackground(
-    ScanBuffer *buf,
+// Set a background plane
+void SetBackground( ScanBuffer *buf,
     int z, // depth of the background. Anything behind this will be invisible
     int r, int g, int b);
 
@@ -58,10 +57,9 @@ void ClearScanBuffer(ScanBuffer *buf);
 // Render a scan buffer to a pixel framebuffer
 // This can be done on a different processor core from other draw commands to spread the load
 // Do not draw to a buffer while it is rendering (switch buffers if you need to)
-void RenderBuffer(
-    ScanBuffer *buf,             // source scan buffer
-    BYTE* data, int rowBytes,    // target frame-buffer
-    int bufSize                  // size of target buffer
+void RenderBuffer( ScanBuffer *buf, // source scan buffer
+    BYTE* data, int rowBytes,       // target frame-buffer
+    int bufSize                     // size of target buffer
 );
 
 

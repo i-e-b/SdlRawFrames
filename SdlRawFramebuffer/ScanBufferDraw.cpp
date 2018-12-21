@@ -21,13 +21,13 @@ ScanBuffer * InitScanBuffer(int width, int height)
         free(buf); return NULL;
     }
 
-    buf->p_heap = Initialize(100);
+    buf->p_heap = Initialize(32000);
     if (buf->p_heap == NULL) {
         free(buf->list);
         return NULL;
     }
 
-    buf->r_heap = Initialize(100);
+    buf->r_heap = Initialize(32000);
     if (buf->r_heap == NULL) {
         Destroy((PriorityQueue)buf->p_heap);
         free(buf->list);
@@ -130,6 +130,8 @@ void FillTrangle(
     if (z < 0) return; // behind camera
     buf->itemCount++;
 
+    // TODO: find a way to ensure these are clockwise
+
     SetLine(buf,   x0, y0, x1, y1,    z, r, g, b);
     SetLine(buf,   x1, y1, x2, y2,    z, r, g, b);
     SetLine(buf,   x2, y2, x0, y0,    z, r, g, b);
@@ -173,9 +175,6 @@ void RenderBuffer(
     if (buf == NULL || data == NULL) return;
 
     // TODO: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
-    // If nothing else, this could go on a 3rd core, moving us to a 3 frame latency
-    //quickSort(buf->list, 0, buf->count - 1);
-    //inPlaceMergeSort(buf->list, 0, buf->count - 1);
     iterativeMergeSort(buf->list, buf->count);
     
     auto list = buf->list;
@@ -199,7 +198,7 @@ void RenderBuffer(
             if (on) {
                 for (; p < sw.pos; p++)
                 {
-                    if (p >= end) return;
+                    if (p >= end) return; // end of pixel buffer
                     ((uint32_t*)data)[p] = color;
                 }
             } else p = sw.pos;
@@ -217,7 +216,7 @@ void RenderBuffer(
         auto top = ElementType{ 0,-1,0 };
         while (TryFindMin(p_heap, &top) && TryFindMin(r_heap, &nextRemove)
             && top.identifier == nextRemove.identifier) {
-            DeleteMin(r_heap); // how do I stop double-stop and double-start?
+            DeleteMin(r_heap);
             DeleteMin(p_heap);
         }
 
@@ -233,11 +232,10 @@ void RenderBuffer(
         if (pixoff > 0) { data[pixoff + 0] = data[pixoff + 1] = data[pixoff + 2] = 0; }
         // END
 #endif
-    }
+    } // out of switch points
 
     if (on) { // fill to end of data
-        for (; p < end; p++)
-        {
+        for (; p < end; p++) {
             ((uint32_t*)data)[p] = color;
         }
     }
