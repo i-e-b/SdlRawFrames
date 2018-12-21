@@ -20,9 +20,17 @@ ScanBuffer * InitScanBuffer(int width, int height)
         free(buf); return NULL;
     }
 
-    buf->heap = Initialize(10);
-    if (buf->heap == NULL) {
+    buf->p_heap = Initialize(100);
+    if (buf->p_heap == NULL) {
         free(buf->list);
+        return NULL;
+    }
+
+    buf->r_heap = Initialize(100);
+    if (buf->r_heap == NULL) {
+        Destroy((PriorityQueue)buf->p_heap);
+        free(buf->list);
+        return NULL;
     }
 
     buf->itemCount = 0;
@@ -38,7 +46,8 @@ void FreeScanBuffer(ScanBuffer * buf)
 {
     if (buf == NULL) return;
     if (buf->list != NULL) free(buf->list);
-    if (buf->heap != NULL) Destroy((PriorityQueue)buf->heap);
+    if (buf->p_heap != NULL) Destroy((PriorityQueue)buf->p_heap);
+    if (buf->r_heap != NULL) Destroy((PriorityQueue)buf->r_heap);
     free(buf);
 }
 
@@ -89,15 +98,16 @@ void SetLine(
     int remains = buf->length - buf->count;
     if (needed > remains) GrowBuffer(buf);
 
-    for (auto i = 0; i <= needed; i++)
+    for (auto i = 1; i <= needed; i++) // skip the first pixel to stop double-counting
     {
         // add a point.
-        auto ox = (grad * i) + x0;
+        int ox = (int)(grad * i) + x0;
         uint32_t addr = ((i + lower)*w) + ox + adj;
 
         SwitchPoint sp;
         sp.id = buf->itemCount;
         sp.pos = addr;
+        sp.depth = z;
         sp.material = color;
         sp.meta = flags;
 
@@ -137,7 +147,6 @@ void ClearScanBuffer(ScanBuffer * buf)
 }
 
 // Sorting the scan buffer
-// TODO: resolve depth and point conflicts
 void InPlaceSort(SwitchPoint *list, int left, int right)
 {
     if (left >= right) { return; } // done
@@ -181,19 +190,19 @@ void RenderBuffer(
 ) {
     if (buf == NULL || data == NULL) return;
 
-    // Plan: implement some kind of fused sort+normalise algorithm so we can then
-    //       run through all the pixels (ignoring on/off and z-depth) rendering dumbly.
-    //       maybe also have a specialised version that doesn't have the target area.
-
-    InPlaceSort(buf->list, 0, buf->count);
+    InPlaceSort(buf->list, 0, buf->count - 1);
     auto list = buf->list;
     auto count = buf->count;
-    auto heap = (PriorityQueue)buf->heap;
+    auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
+    auto r_heap = (PriorityQueue)buf->r_heap;   // removal heap
     
-    int end = bufSize / 4; // end of data in 32bit words
+    MakeEmpty(p_heap);
+    MakeEmpty(r_heap);
+
+    uint32_t end = bufSize / 4; // end of data in 32bit words
 
     bool on = false;
-    int p = 0; // current pixel
+    uint32_t p = 0; // current pixel
     uint32_t color;
     for (int i = 0; i < count; i++)
     {
@@ -209,23 +218,27 @@ void RenderBuffer(
             } else p = sw.pos;
         }
 
-        if (sw.meta & 0x01) { // 'on' point, add to heap
-            // todo: maybe find and turn back on?
-            Insert(ElementType{ /*depth:*/ sw.depth, /*lookup index:*/ sw.id }, heap);
-        } else { // 'off' point, deactivate from heap
-
+        auto heapElem = ElementType{ /*depth:*/ sw.depth, /*unique id:*/ sw.id, /*lookup index:*/ i };
+        if (sw.meta & 0x01) { // 'on' point, add to presentation heap
+            Insert(heapElem, p_heap);
+        } else { // 'off' point, add to removal heap
+            Insert(heapElem, r_heap);
         }
-        //on = IsEmpty(heap);
 
+        // while top of p_heap and r_heap match, remove both.
+        auto nextRemove = ElementType{ 0,-1,0 };
+        auto top = ElementType{ 0,-1,0 };
+        while (TryFindMin(p_heap, &top) && TryFindMin(r_heap, &nextRemove)
+            && top.identifier == nextRemove.identifier) {
+            DeleteMin(r_heap); // how do I stop double-stop and double-start?
+            DeleteMin(p_heap);
+        }
 
-
-        on = sw.meta == 0x01;
-        color = sw.material;
-
-        // TODO: If off and is current top of the heap, drop it.
-        //       If off and not top of heap, scan for it and mark it dead (negative priority)
-        // When we off the heap, if the next element has -ve priority, drop that too. Keep going
-        //  until empty or +ve priority found
+        // set color for next run based on top of p_heap
+        on = ! IsEmpty(p_heap);
+        if (on) {
+            color = list[top.lookup].material;
+        }
 
 #if 0
         // DEBUG: show switch point in black
@@ -241,19 +254,6 @@ void RenderBuffer(
             ((uint32_t*)data)[p] = color;
         }
     }
-
-    /*
-        Insert(ElementType{2, 200}, heap);
-        Insert(ElementType{20, 2000}, heap);
-        Insert(ElementType{3, 300}, heap);
-        Insert(ElementType{1, 100}, heap);
-        Insert(ElementType{15, 1500}, heap);
-
-        while (!IsEmpty(heap)) {
-            ElementType tmp = DeleteMin(heap);
-            cout << "Found depth = " << tmp.depth << ", idx = " << tmp.identifier << ";\r\n";
-        }
-        */
 }
 
 // NOTES:
@@ -264,42 +264,3 @@ void RenderBuffer(
 
 // Holes: A CCW winding polygon will have 'OFF's before 'ON's, being inside-out. If a single 'ON' is set before this shape
 //        (Same as a background) then we will fill only where the polygon is *not* present -- this makes vignette effects simple
-
-/*
-
-With low Z being closest.
-
-Part overlap right
-xxx8xx3xx8xx3xxx
-   8  3  3  x
-      8
-
-Part overlap left
-xxx3xx8xx3xx8xxx
-   3  3  8  x
-      8
-
-Complete obscure
-xxx3xx8xx8xx3xxx
-   3  3  3  x
-      8  8
-
-Front and centre
-xxx8xx3xx3xx8xxx
-   8  3  8  x
-      8
-
-Conflict
-   1  1  1  1
-xxxAxxBxxAxxBxxx
-
-
-Shared edge
-
-x[8,3]xx3xx8xxx
-   3    8  x
-   8
-
-Sorted [list | heap] of switch points
-
-*/

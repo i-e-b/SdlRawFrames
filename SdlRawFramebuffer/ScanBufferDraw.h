@@ -22,14 +22,14 @@ typedef struct SwitchPoint {
 
 // buffer of switch points.
 typedef struct ScanBuffer {
-    uint16_t itemCount;      // used to give each switch-point a unique ID
+    uint16_t itemCount;      // used to give each switch-point a unique ID. This is critical for the depth-sorting process
     int height;
     int width;
 
-    int count;          // number of items in the array
-    int length;         // memory length of the array
-    SwitchPoint *list;  // array of switch points. When drawing to the buffer, we can just append. Before rendering, this must be sorted by abs(pos)
-    void *heap;         // internal heap for depth sorting
+    int count;              // number of items in the array
+    int length;             // memory length of the array
+    SwitchPoint *list;      // array of switch points. When drawing to the buffer, we can just append. Before rendering, this must be sorted by abs(pos)
+    void *p_heap, *r_heap;  // internal heaps for depth sorting
 } ScanBuffer;
 
 ScanBuffer *InitScanBuffer(int width, int height);

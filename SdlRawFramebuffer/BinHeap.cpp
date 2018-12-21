@@ -64,7 +64,6 @@ void Insert(ElementType X, PriorityQueue H) {
     H->Elements[i] = X;
 }
 
-
 ElementType DeleteMin(PriorityQueue H) {
     int i, Child;
     ElementType MinElement, LastElement;
@@ -92,6 +91,14 @@ ElementType FindMin(PriorityQueue H) {
     if (!IsEmpty(H)) return H->Elements[1];
 
     return H->Elements[0];
+}
+
+bool TryFindMin(PriorityQueue H, ElementType *found) {
+    if (!IsEmpty(H)) {
+        *found = H->Elements[1];
+        return true;
+    }
+    return false;
 }
 
 int IsEmpty(PriorityQueue H) {

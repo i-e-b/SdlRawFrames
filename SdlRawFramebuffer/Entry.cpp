@@ -29,24 +29,6 @@ int main(int argc, char * argv[])
         cout << "SDL initialization succeeded!\r\n";
     }
 
-    // TEST of heap
-
-    auto heap = Initialize(10);
-    Insert(ElementType{ 2, 3   }, heap);
-    Insert(ElementType{ 2, 1   }, heap);
-    Insert(ElementType{ 1, 100 }, heap);
-    Insert(ElementType{ 2, 2   }, heap);
-    Insert(ElementType{ 3, 0   }, heap);
-    Insert(ElementType{ 2, 4   }, heap);
-
-    while (!IsEmpty(heap)) {
-        ElementType tmp = DeleteMin(heap);
-        cout << "depth = " << tmp.depth << ", idx = " << tmp.identifier << ";\r\n";
-    }
-    Destroy(heap);
-
-    // END TEST
-
     //Create window
     window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (window == NULL)
@@ -78,7 +60,7 @@ int main(int argc, char * argv[])
     cout << "\r\nBytesPerPixel: " << (pixBytes) << ", exact? " << (((screenSurface->pitch % pixBytes) == 0) ? "yes" : "no");
 
     int size = w * h * pixBytes;
-    int animationFrames =  500;
+    int animationFrames = 500;
 
     auto scanBuf = InitScanBuffer(w, h);
 
@@ -108,23 +90,32 @@ int main(int argc, char * argv[])
             CoverageLine(base, rowBytes, 150, 150, 300, na,     0,0,0);
         }
 
+        ClearScanBuffer(scanBuf); // wipe out buffer
+
         // Test draw with the scan buffer
         FillTrangle(scanBuf,
             430, 170,
             430, 130,
             470, 150,
-            10,
-            frame*4, frame*2, frame); // rainbow
+            5,                              // near
+            frame * 4, frame * 2, frame);   // rainbow
+
+        FillTrangle(scanBuf,
+            430, 270,
+            430, 230,
+            470, 250,
+            15,                             // far
+            frame, frame * 2, frame * 4);   // rainbow
 
         FillTrangle(scanBuf,
             450, 300,
             450, 100,
             550, 250,
-            5,
-            0, 0, 0); // black
+            10,          // middle
+            255, 0, 0);  // red
+
 
         RenderBuffer(scanBuf, base, rowBytes, size);
-        ClearScanBuffer(scanBuf); // wipe out buffer
 
         //Update the surface -- need to do this every frame.
         SDL_UpdateWindowSurface(window);
