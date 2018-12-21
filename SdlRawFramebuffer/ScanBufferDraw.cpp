@@ -187,7 +187,8 @@ void RenderBuffer(
 
     InPlaceSort(buf->list, 0, buf->count);
     auto list = buf->list;
-    auto count = buf->count; // this might need updating after sort/split
+    auto count = buf->count;
+    auto heap = (PriorityQueue)buf->heap;
     
     int end = bufSize / 4; // end of data in 32bit words
 
@@ -198,7 +199,7 @@ void RenderBuffer(
     {
         SwitchPoint sw = list[i];
 
-        if (sw.pos > p) {
+        if (sw.pos > p) { // render up to this switch point
             if (on) {
                 for (; p < sw.pos; p++)
                 {
@@ -207,8 +208,24 @@ void RenderBuffer(
                 }
             } else p = sw.pos;
         }
+
+        if (sw.meta & 0x01) { // 'on' point, add to heap
+            // todo: maybe find and turn back on?
+            Insert(ElementType{ /*depth:*/ sw.depth, /*lookup index:*/ sw.id }, heap);
+        } else { // 'off' point, deactivate from heap
+
+        }
+        //on = IsEmpty(heap);
+
+
+
         on = sw.meta == 0x01;
         color = sw.material;
+
+        // TODO: If off and is current top of the heap, drop it.
+        //       If off and not top of heap, scan for it and mark it dead (negative priority)
+        // When we off the heap, if the next element has -ve priority, drop that too. Keep going
+        //  until empty or +ve priority found
 
 #if 0
         // DEBUG: show switch point in black
@@ -234,7 +251,7 @@ void RenderBuffer(
 
         while (!IsEmpty(heap)) {
             ElementType tmp = DeleteMin(heap);
-            cout << "Found depth = " << tmp.depth << ", idx = " << tmp.index << ";\r\n";
+            cout << "Found depth = " << tmp.depth << ", idx = " << tmp.identifier << ";\r\n";
         }
         */
 }

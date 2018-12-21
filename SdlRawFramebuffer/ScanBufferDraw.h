@@ -13,9 +13,10 @@
 // 'drawing' involves writing a list of these, sorting by x-position, then filling the scanline
 typedef struct SwitchPoint {
     uint16_t id;                // itemCount when this point was drawn, the object ID (limit of 65k objects per frame)
+    int16_t  depth;             // z-position in final image
     uint32_t pos;               // position of switch-point, as (y*width)+x;
     uint32_t material;          // RGB (24 bit of color). Could also be used to look up a texture or other style later.
-    uint8_t meta;               // metadata/flags.
+    uint8_t  meta;              // metadata/flags. TODO: better alignment, merge into material?
                                 // 0x01: set = 'on' point, unset = 'off' point
 } SwitchPoint;
 

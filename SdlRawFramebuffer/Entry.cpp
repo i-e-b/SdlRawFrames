@@ -1,5 +1,6 @@
 #include "ImmediateDraw.h"
 #include "ScanBufferDraw.h"
+#include "BinHeap.h"
 
 #include <iostream>
 #include <SDL.h>
@@ -25,8 +26,26 @@ int main(int argc, char * argv[])
     }
     else
     {
-        cout << "SDL initialization succeeded!";
+        cout << "SDL initialization succeeded!\r\n";
     }
+
+    // TEST of heap
+
+    auto heap = Initialize(10);
+    Insert(ElementType{ 2, 3   }, heap);
+    Insert(ElementType{ 2, 1   }, heap);
+    Insert(ElementType{ 1, 100 }, heap);
+    Insert(ElementType{ 2, 2   }, heap);
+    Insert(ElementType{ 3, 0   }, heap);
+    Insert(ElementType{ 2, 4   }, heap);
+
+    while (!IsEmpty(heap)) {
+        ElementType tmp = DeleteMin(heap);
+        cout << "depth = " << tmp.depth << ", idx = " << tmp.identifier << ";\r\n";
+    }
+    Destroy(heap);
+
+    // END TEST
 
     //Create window
     window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
