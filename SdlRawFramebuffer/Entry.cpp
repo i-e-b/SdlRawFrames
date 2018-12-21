@@ -110,10 +110,22 @@ int main(int argc, char * argv[])
         FillTrangle(scanBuf,
             450, 300,
             450, 100,
-            550, 250,
+            670, 200,    // slight overshoot (tests clipping)
             10,          // middle
             255, 0, 0);  // red
 
+        // a whole bunch of small triangles
+        // to torture test. Also wraps top/bottom
+        for (int ti = 0; ti < 500; ti++)
+        {
+            auto oti = (ti * 10) % 640;
+            FillTrangle(scanBuf,
+                5  + oti,    0 + ti,
+                0  + oti,  -10 + ti,
+                10 + oti,  -10 + ti,
+                ti + 3,
+                ti % 255, ti % 255, 255);
+        }
 
         RenderBuffer(scanBuf, base, rowBytes, size);
 

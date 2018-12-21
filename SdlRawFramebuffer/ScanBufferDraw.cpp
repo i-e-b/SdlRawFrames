@@ -65,44 +65,42 @@ void SetLine(
     int z,
     int r, int g, int b)
 {
-    int upper, lower;
-    int left;
-    float grad; // probably good enough on raspi, but might do with fixed-point
-    int h = buf->height;
-    int w = buf->width;
-    uint8_t flags;
-    int adj; // 'off' pixels are pushed 1 to the right
-
     if (y0 == y1) {
-        return; // no scanlines would be affected
-    }
-    if (y0 < y1) { // going down
-        flags = 0x00; // 'off' line
-        upper = (y1 < 0) ? 0 : y1;
-        lower = (y0 > h) ? h : y0;
-        left = x0;
-        adj = 1;
-        grad = (float)(x1 - x0) / (float)(y1 - y0);
-    } else { // going up
-        flags = 0x01; // 'on' line
-        upper = (y0 < 0) ? 0 : y0;
-        lower = (y1 > h) ? h : y1;
-        left = x0;
-        adj = 0;
-        grad = (float)(x1 - x0) / (float)(y0 - y1);
+        return; // ignore: no scanlines would be affected
     }
 
     uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+    int h = buf->height;
+    int w = buf->width;
+    uint8_t flags;
+    
+    if (y0 < y1) { // going down
+        flags = 0x00; // 'off' line
+    } else { // going up
+        flags = 0x01; // 'on' line
+        // swap coords so we can always calculate down (always 1 entry per y coord)
+        int tmp;
+        tmp = x0; x0 = x1; x1 = tmp;
+        tmp = y0; y0 = y1; y1 = tmp;
+    }
 
-    int needed = upper - lower;
+
+    int top = (y0 < 0) ? 0 : y0;
+    int bottom = (y1 > h) ? h : y1;
+    float grad = (float)(x0 - x1) / (float)(y0 - y1);
+
+
+    int scanlines = bottom - top;
     int remains = buf->length - buf->count;
-    if (needed > remains) GrowBuffer(buf);
+    if (scanlines > remains) GrowBuffer(buf);
 
-    for (auto i = 1; i <= needed; i++) // skip the first pixel to stop double-counting
+    for (auto i = 0; i < scanlines; i++) // skip the last pixel to stop double-counting
     {
         // add a point.
         int ox = (int)(grad * i) + x0;
-        uint32_t addr = ((i + lower)*w) + ox + adj;
+        if (ox < 0) ox = 0; // saturate edges for clipping (without this shapes wrap horizontally)
+        if (ox > w) ox = w;
+        uint32_t addr = ((i + top) * w) + ox;
 
         SwitchPoint sp;
         sp.id = buf->itemCount;
