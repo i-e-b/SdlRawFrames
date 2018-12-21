@@ -101,7 +101,7 @@ void inPlaceMergeSort(SwitchPoint *list, int left, int right)
 
 
 // Utility function to find minimum of two integers 
-int min(int x, int y) { return (x < y) ? x : y; }
+#define min(x,y)   (x < y) ? (x) : (y)
 
 /* Function to merge the two haves arr[l..m] and arr[m+1..r] of array arr[] */
 void merge(SwitchPoint arr[], SwitchPoint *aux, int l, int m, int r)
@@ -110,9 +110,12 @@ void merge(SwitchPoint arr[], SwitchPoint *aux, int l, int m, int r)
     int n1 = m - l + 1;
     int n2 = r - m;
 
+    // TODO: change this to not require the double-copy
+    // (don't have L and R separate?)
+
     /* place temp arrays in the aux buffer */
     SwitchPoint *L = aux;
-    SwitchPoint *R = &(aux[n1+1]);
+    SwitchPoint *R = &(aux[n1]);
 
     /* Copy data to temp arrays L[] and R[] */
     for (i = 0; i < n1; i++) L[i] = arr[l + i];
@@ -156,7 +159,7 @@ void iterativeMergeSort(SwitchPoint arr[], int n)
     int left_start; // For picking starting index of left subarray 
                     // to be merged 
 
-    SwitchPoint *aux = (SwitchPoint*)malloc((n+1)*sizeof(SwitchPoint));
+    SwitchPoint *aux = (SwitchPoint*)malloc((n + 1) * sizeof(SwitchPoint));
 
     // Merge subarrays in bottom up manner.  First merge subarrays of 
     // size 1 to create sorted subarrays of size 2, then merge subarrays 
