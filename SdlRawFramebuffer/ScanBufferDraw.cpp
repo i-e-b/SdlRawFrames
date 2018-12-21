@@ -1,4 +1,5 @@
 #include "ScanBufferDraw.h"
+#include "Sort.h"
 #include "BinHeap.h"
 #include <stdlib.h>
 
@@ -84,11 +85,9 @@ void SetLine(
         tmp = y0; y0 = y1; y1 = tmp;
     }
 
-
     int top = (y0 < 0) ? 0 : y0;
     int bottom = (y1 > h) ? h : y1;
     float grad = (float)(x0 - x1) / (float)(y0 - y1);
-
 
     int scanlines = bottom - top;
     int remains = buf->length - buf->count;
@@ -144,39 +143,6 @@ void ClearScanBuffer(ScanBuffer * buf)
     buf->count = 0; // set occupancy to zero. All the old scanline values remain, but we ignore them
 }
 
-// Sorting the scan buffer
-void InPlaceSort(SwitchPoint *list, int left, int right)
-{
-    if (left >= right) { return; } // done
-    int lo = left;
-    int hi = right;
-
-    int mid = lo + ((hi - lo) / 2);
-
-    // Partition the list into two lists and sort them recursively
-    InPlaceSort(list, lo, mid);
-    InPlaceSort(list, mid + 1, hi);
-
-    // Merge the two sorted lists
-    int end_lo = mid;
-    int start_hi = mid + 1;
-    while ((lo <= end_lo) && (start_hi <= hi)) {
-        if (list[lo].pos < list[start_hi].pos) { // THIS IS THE COMPARE. We order by 'pos'
-            // in order
-            lo++;
-        } else {// out of order
-            // Merge items are out of order. Swap things around
-            SwitchPoint temp = list[start_hi];
-            for (int k = start_hi - 1; k >= lo; k--) {
-                list[k + 1] = list[k];
-            }
-            list[lo] = temp;
-            lo++;
-            end_lo++;
-            start_hi++;
-        }
-    }
-}
 
 // Render a scan buffer to a pixel framebuffer
 // This can be done on a different processor core from other draw commands to spread the load
@@ -188,7 +154,12 @@ void RenderBuffer(
 ) {
     if (buf == NULL || data == NULL) return;
 
-    InPlaceSort(buf->list, 0, buf->count - 1);
+    // TODO: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
+    // If nothing else, this could go on a 3rd core, moving us to a 3 frame latency
+    //quickSort(buf->list, 0, buf->count - 1);
+    //inPlaceMergeSort(buf->list, 0, buf->count - 1);
+    iterativeMergeSort(buf->list, buf->count);
+    
     auto list = buf->list;
     auto count = buf->count;
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
