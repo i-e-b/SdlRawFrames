@@ -46,6 +46,11 @@ void FillTrangle(
     int z,
     int r, int g, int b);
 
+void SetBackground(
+    ScanBuffer *buf,
+    int z, // depth of the background. Anything behind this will be invisible
+    int r, int g, int b);
+
 // Reset all drawing operations in the buffer, ready for next frame
 // Do this *after* rendering to pixel buffer
 void ClearScanBuffer(ScanBuffer *buf);

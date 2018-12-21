@@ -85,6 +85,7 @@ void SetLine(
         tmp = y0; y0 = y1; y1 = tmp;
     }
 
+    int yoff = (y0 < 0) ? -y0 : 0;
     int top = (y0 < 0) ? 0 : y0;
     int bottom = (y1 > h) ? h : y1;
     float grad = (float)(x0 - x1) / (float)(y0 - y1);
@@ -96,7 +97,7 @@ void SetLine(
     for (auto i = 0; i < scanlines; i++) // skip the last pixel to stop double-counting
     {
         // add a point.
-        int ox = (int)(grad * i) + x0;
+        int ox = (int)(grad * (i + yoff)) + x0;
         if (ox < 0) ox = 0; // saturate edges for clipping (without this shapes wrap horizontally)
         if (ox > w) ox = w;
         uint32_t addr = ((i + top) * w) + ox;
@@ -132,6 +133,23 @@ void FillTrangle(
     SetLine(buf,   x0, y0, x1, y1,    z, r, g, b);
     SetLine(buf,   x1, y1, x2, y2,    z, r, g, b);
     SetLine(buf,   x2, y2, x0, y0,    z, r, g, b);
+}
+
+// Set a single 'on' point at the given level. Nice and simple
+void SetBackground(
+    ScanBuffer *buf,
+    int z, // depth of the background. Anything behind this will be invisible
+    int r, int g, int b) {
+
+    SwitchPoint sp;
+    sp.id = buf->itemCount++;
+    sp.pos = 0; // top-left of image
+    sp.depth = z;
+    sp.material = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+    sp.meta = 0x01; // 'on'
+
+    buf->list[buf->count] = sp;
+    buf->count++;
 }
 
 // Reset all drawing operations in the buffer, ready for next frame
