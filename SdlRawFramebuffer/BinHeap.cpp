@@ -43,18 +43,22 @@ void MakeEmpty(PriorityQueue H) {
 
 // H->Element[0] is an empty value that makes the math simpler
 
+// returns true if A > B
+// should give stable results by including unique ID when priority is equal
+bool Compare(ElementType A, ElementType B) {
+    if (A.depth > B.depth) return true;
+    if (A.depth < B.depth) return false;
+    return A.identifier > B.identifier; // depths are equal, use identifier
+}
+
 void Insert(ElementType X, PriorityQueue H) {
-    if (IsFull(H)) {
-        return;
-    }
+    if (IsFull(H)) { return; }
 
     int i;
 
-    for (i = ++H->Size; 
-        H->Elements[i / 2].depth > X.depth; // ############# comparison
-        i /= 2)
+    for (i = ++H->Size; Compare(H->Elements[i >> 1], X); i >>= 1)
     {
-        H->Elements[i] = H->Elements[i / 2];
+        H->Elements[i] = H->Elements[i >> 1];
     }
 
     H->Elements[i] = X;
@@ -74,10 +78,10 @@ ElementType DeleteMin(PriorityQueue H) {
     for (i = 1; i * 2 <= H->Size; i = Child) {
         /* Find smaller child */
         Child = i * 2;
-        if (Child != H->Size && H->Elements[Child + 1].depth < H->Elements[Child].depth) Child++; // ############# comparison
+        if (Child != H->Size && Compare(H->Elements[Child], H->Elements[Child + 1])) Child++;
 
         /* Percolate one level */
-        if (LastElement.depth > H->Elements[Child].depth) H->Elements[i] = H->Elements[Child]; // ############# comparison
+        if (Compare(LastElement, H->Elements[Child])) H->Elements[i] = H->Elements[Child];
         else break;
     }
     H->Elements[i] = LastElement;
