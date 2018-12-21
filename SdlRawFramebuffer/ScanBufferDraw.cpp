@@ -21,13 +21,13 @@ ScanBuffer * InitScanBuffer(int width, int height)
         free(buf); return NULL;
     }
 
-    buf->p_heap = Initialize(32000);
+    buf->p_heap = Initialize(3200);
     if (buf->p_heap == NULL) {
         free(buf->list);
         return NULL;
     }
 
-    buf->r_heap = Initialize(32000);
+    buf->r_heap = Initialize(3200);
     if (buf->r_heap == NULL) {
         Destroy((PriorityQueue)buf->p_heap);
         free(buf->list);

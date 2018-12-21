@@ -27,8 +27,7 @@ int frameByteSize = 0;
 int RenderWorker(void* data)
 {
     while (!quit) {
-        long fst = SDL_GetTicks();
-        SDL_Delay(5); // give the other frame a chance to lock
+        SDL_Delay(5); // give the other loop a chance to lock
         if (base == NULL) continue;
 
         SDL_LockMutex(gDataLock); //Lock
@@ -38,10 +37,6 @@ int RenderWorker(void* data)
         RenderBuffer(scanBuf, base, rowBytes, frameByteSize);
 
         SDL_UnlockMutex(gDataLock); //Unlock
-
-        // pause for the frame remainder
-        long ftime = (SDL_GetTicks() - fst);
-        if (ftime < 15) SDL_Delay(15 - ftime);
     }
     return 0;
 }
@@ -76,7 +71,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     // a whole bunch of small triangles
     // to torture test. Also wraps top/bottom
     for (int ti = 0; ti < 4000; ti++) {
-        auto oti = (frame + ti * 7) % 640;
+        auto oti = (frame + ti * 11) % 640;
         auto yti = (ti >> 3);
         FillTrangle(scanBuf,
             5 + oti, 0 + yti,
@@ -125,7 +120,7 @@ int main(int argc, char * argv[])
     cout << "\r\nBytesPerPixel: " << (pixBytes) << ", exact? " << (((screenSurface->pitch % pixBytes) == 0) ? "yes" : "no");
 
     frameByteSize = w * h * pixBytes;
-    int animationFrames = 500;
+    int animationFrames = 1500;
 
     BufferA = InitScanBuffer(w, h);
     BufferB = InitScanBuffer(w, h);
@@ -136,6 +131,9 @@ int main(int argc, char * argv[])
     // Used to calculate the frames per second
     long startTicks = SDL_GetTicks();
     long idleTime = 0;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Draw loop                                                                                      //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
     for (auto frame = 0; frame < animationFrames; frame++) {
         long fst = SDL_GetTicks();
 
@@ -155,6 +153,7 @@ int main(int argc, char * argv[])
         if (ftime < 15) SDL_Delay(15 - ftime);
         idleTime += 15 - ftime; // indication of how much slack we have
     }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     quit = true;
 
