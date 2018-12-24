@@ -37,7 +37,6 @@ ScanBuffer *InitScanBuffer(int width, int height);
 void FreeScanBuffer(ScanBuffer *buf);
 
 // Fill a triagle with a solid colour
-// Triangle must be clockwise winding
 void FillTrangle( ScanBuffer *buf,
     int x0, int y0, 
     int x1, int y1,

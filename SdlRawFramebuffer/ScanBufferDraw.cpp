@@ -115,9 +115,18 @@ void SetLine(
 
 }
 
+// float i, j, k;
+/*Vector crossProduct(Vector a, Vector b)
+{
+    Vector c = { a.j*b.k - a.k*b.j, a.k*b.i - a.i*b.k, a.i*b.j - a.j*b.i };
+
+    return c;
+}*/
+
+
 // Fill a triagle with a solid colour
 // Triangle must be clockwise winding (if dy is -ve, line is 'on', otherwise line is 'off')
-// counter-clockwise contours are not handled, and will lead to weird effects, like holes (feel free to abuse)
+// counter-clockwise contours are detected and rearraged
 void FillTrangle(
     ScanBuffer *buf, 
     int x0, int y0,
@@ -130,11 +139,25 @@ void FillTrangle(
     if (z < 0) return; // behind camera
     buf->itemCount++;
 
-    // TODO: find a way to ensure these are clockwise
+    if (x0 == x1 && x1 == x2) return; // empty
+    if (y0 == y1 && y1 == y2) return; // empty
 
-    SetLine(buf,   x0, y0, x1, y1,    z, r, g, b);
-    SetLine(buf,   x1, y1, x2, y2,    z, r, g, b);
-    SetLine(buf,   x2, y2, x0, y0,    z, r, g, b);
+    // Cross product (finding only z)
+    // this tells us if we are clockwise or ccw.
+    int dx1 = x1 - x0; int dx2 = x2 - x0;
+    int dy1 = y1 - y0; int dy2 = y2 - y0;
+    int dz = dx1 * dy2 - dy1 * dx2;
+
+    if (dz > 0) { // cw
+        SetLine(buf, x0, y0, x1, y1, z, r, g, b);
+        SetLine(buf, x1, y1, x2, y2, z, r, g, b);
+        SetLine(buf, x2, y2, x0, y0, z, r, g, b);
+    } else { // ccw - switch vertex 1 and 2 to make it clockwise.
+        SetLine(buf, x0, y0, x2, y2, z, r, g, b);
+        SetLine(buf, x2, y2, x1, y1, z, r, g, b);
+        SetLine(buf, x1, y1, x0, y0, z, r, g, b);
+    }
+
 }
 
 // Set a single 'on' point at the given level. Nice and simple

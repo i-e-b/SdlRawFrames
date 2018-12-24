@@ -10,8 +10,8 @@
 using namespace std;
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
 
 // Two-thread rendering stuff:
 SDL_Thread *thread = NULL; // Thread for multi-pass rendering
@@ -47,10 +47,19 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 
     SetBackground(scanBuf, 10000, 0, 0, 0);
 
-    FillTrangle(scanBuf,
-        430, 170,
-        430, 130,
+    auto rx = sin(frame / 128.0f) * 80;
+    auto ry = -cos(frame / 128.0f) * 80;
+    FillTrangle(scanBuf, // ccw
+        230 + rx, 130 + ry,
+        230, 170,
+        270, 150,
+        4, 200, 255, 200);
+    FillTrangle(scanBuf, 230 + rx, 130 + ry, 235 + rx, 135 + ry, 225 + rx, 135 + ry, 3, 255, 255, 255);
+
+    FillTrangle(scanBuf, // ccw
         470, 150,
+        430, 130,
+        430, 170,
         5,                              // near
         frame * 4, frame * 2, frame);   // rainbow
 
@@ -71,7 +80,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     // a whole bunch of small triangles
     // to torture test. Also wraps top/bottom
     for (int ti = 0; ti < 4000; ti++) {
-        auto oti = (frame + ti * 11) % 640;
+        auto oti = (frame + ti * 9) % 640;
         auto yti = (ti >> 3);
         FillTrangle(scanBuf,
             5 + oti, 0 + yti,
