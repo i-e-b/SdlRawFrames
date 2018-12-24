@@ -115,15 +115,6 @@ void SetLine(
 
 }
 
-// float i, j, k;
-/*Vector crossProduct(Vector a, Vector b)
-{
-    Vector c = { a.j*b.k - a.k*b.j, a.k*b.i - a.i*b.k, a.i*b.j - a.j*b.i };
-
-    return c;
-}*/
-
-
 // Fill a triagle with a solid colour
 // Triangle must be clockwise winding (if dy is -ve, line is 'on', otherwise line is 'off')
 // counter-clockwise contours are detected and rearraged
@@ -199,9 +190,10 @@ void RenderBuffer(
 
     // TODO: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
     iterativeMergeSort(buf->list, buf->count);
-    
+
     auto list = buf->list;
     auto count = buf->count;
+    
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
     auto r_heap = (PriorityQueue)buf->r_heap;   // removal heap
     

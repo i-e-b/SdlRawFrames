@@ -49,7 +49,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 
     auto rx = sin(frame / 128.0f) * 80;
     auto ry = -cos(frame / 128.0f) * 80;
-    FillTrangle(scanBuf, // ccw
+    FillTrangle(scanBuf, // this triangle alternates between cw and ccw
         230 + rx, 130 + ry,
         230, 170,
         270, 150,
@@ -63,7 +63,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         5,                              // near
         frame * 4, frame * 2, frame);   // rainbow
 
-    FillTrangle(scanBuf,
+    FillTrangle(scanBuf, // cw
         430, 270,
         430, 230,
         470, 250,
@@ -79,8 +79,8 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 
     // a whole bunch of small triangles
     // to torture test. Also wraps top/bottom
-    for (int ti = 0; ti < 4000; ti++) {
-        auto oti = (frame + ti * 9) % 640;
+    /*for (int ti = 0; ti < 6000; ti++) {
+        auto oti = (frame + ti * 7) % 800;
         auto yti = (ti >> 3);
         FillTrangle(scanBuf,
             5 + oti, 0 + yti,
@@ -88,7 +88,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
             10 + oti, -10 + yti,
             ti + 3,
             ti % 255, ti % 255, 255);
-    }
+    }*/
 }
 
 
