@@ -18,6 +18,8 @@ Planned:
 * [ ] Antialiasing for scan-buffer
 * [ ] Alpha-layers in scan buffer
 * [ ] Font reader and renderer (with scan-buffer switch point caching and rendering)
+* [ ] Gourad (linear) shading
 * [ ] logical geometry for shapes in scan buffer (union, subtract, intersect, x-or)
 * [ ] Affine texturing
 * [ ] Perspective texturing
+* [ ] Auto buffer scaling
