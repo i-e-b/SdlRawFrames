@@ -37,11 +37,11 @@ void iterativeMergeSort(SwitchPoint arr1[], int n) {
                 }
             } // exhausted at least one of the merge sides
 
-            while (l < right) { // run down left if anything left
+            while (l < right) { // run down left if anything remains
                 B[t++] = A[l++];
             }
 
-            while (r < end) { // run down right side if anything left
+            while (r < end) { // run down right side if anything remains
                 B[t++] = A[r++];
             }
         }
