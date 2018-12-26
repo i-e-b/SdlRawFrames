@@ -24,13 +24,13 @@ ScanBuffer * InitScanBuffer(int width, int height)
         free(buf); return NULL;
     }
 
-    buf->p_heap = Initialize(3200);
+    buf->p_heap = Initialize(32000);
     if (buf->p_heap == NULL) {
         free(buf->list);
         return NULL;
     }
 
-    buf->r_heap = Initialize(3200);
+    buf->r_heap = Initialize(32000);
     if (buf->r_heap == NULL) {
         Destroy((PriorityQueue)buf->p_heap);
         free(buf->list);
@@ -169,16 +169,15 @@ void FillEllipse(ScanBuffer *buf,
     int z,
     int r, int g, int b)
 {
-    if (height < 1 || width < 1) return;
+
     if (z < 0) return; // behind camera
     buf->itemCount++;
+    uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
 
     int a2 = width * width;
     int b2 = height * height;
     int fa2 = 4 * a2, fb2 = 4 * b2;
     int x, y, sigma;
-
-    uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
 
     // Top and bottom (need to ensure we don't double the scanlines)
     for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
@@ -196,12 +195,69 @@ void FillEllipse(ScanBuffer *buf,
     }
 
     // Left and right
-    for (x = width, y = 0, sigma = 2 * a2 + b2 * (1 - 2 * width); a2*y <= b2 * x; y++) {
+    SetSP(buf, xc - width, yc, z, color, ON);
+    SetSP(buf, xc + width, yc, z, color, OFF);
+    for (x = width, y = 1, sigma = 2 * a2 + b2 * (1 - 2 * width); a2*y < b2 * x; y++) {
+
         SetSP(buf, xc - x, yc + y, z, color, ON);
         SetSP(buf, xc + x, yc + y, z, color, OFF);
 
         SetSP(buf, xc - x, yc - y, z, color, ON);
         SetSP(buf, xc + x, yc - y, z, color, OFF);
+
+        if (sigma >= 0) {
+            sigma += fb2 * (1 - x);
+            x--;
+        }
+        sigma += a2 * ((4 * y) + 6);
+    }
+}
+
+
+void EllipseHole(ScanBuffer *buf,
+    int xc, int yc, int width, int height,
+    int z,
+    int r, int g, int b) {
+
+    if (z < 0) return; // behind camera
+    buf->itemCount++;
+
+    // set background
+    uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+    SetSP(buf, 0, z, color, ON);
+
+    // Same as ellipse, but with on and off flipped to make hole
+
+    int a2 = width * width;
+    int b2 = height * height;
+    int fa2 = 4 * a2, fb2 = 4 * b2;
+    int x, y, sigma;
+
+    // Top and bottom (need to ensure we don't double the scanlines)
+    for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
+        if (sigma >= 0) {
+            sigma += fa2 * (1 - y);
+            // only draw scan points when we change y
+            SetSP(buf, xc - x, yc + y, z, color, OFF);
+            SetSP(buf, xc + x, yc + y, z, color, ON);
+
+            SetSP(buf, xc - x, yc - y, z, color, OFF);
+            SetSP(buf, xc + x, yc - y, z, color, ON);
+            y--;
+        }
+        sigma += b2 * ((4 * x) + 6);
+    }
+
+    // Left and right
+    SetSP(buf, xc - width, yc, z, color, OFF);
+    SetSP(buf, xc + width, yc, z, color, ON);
+    for (x = width, y = 1, sigma = 2 * a2 + b2 * (1 - 2 * width); a2*y < b2 * x; y++) {
+
+        SetSP(buf, xc - x, yc + y, z, color, OFF);
+        SetSP(buf, xc + x, yc + y, z, color, ON);
+
+        SetSP(buf, xc - x, yc - y, z, color, OFF);
+        SetSP(buf, xc + x, yc - y, z, color, ON);
 
         if (sigma >= 0) {
             sigma += fb2 * (1 - x);

@@ -115,7 +115,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         255, 200, 255);
 
     // a whole bunch of small triangles
-    // to torture test. Also wraps top/bottom
+    // as a torture test. Also wraps top/bottom
     for (int ti = 0; ti < 6000; ti++) {
         auto oti = (frame + ti * 18) % 820;
         auto yti = (ti >> 3);
@@ -126,6 +126,11 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
             ti + 3,
             ti % 255, ti % 255, 255);
     }
+
+    EllipseHole(scanBuf,
+        400, 300, 400, 300,
+        20,
+        0, 0, 0);
 }
 
 
