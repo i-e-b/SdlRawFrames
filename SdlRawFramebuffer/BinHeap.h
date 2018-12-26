@@ -13,14 +13,14 @@ typedef struct ElementType {
 struct HeapStruct;
 typedef struct HeapStruct *PriorityQueue;
 
-PriorityQueue Initialize(int MaxElements);
-void Destroy(PriorityQueue H);
-void MakeEmpty(PriorityQueue H);
-void Insert(ElementType X, PriorityQueue H);
-ElementType DeleteMin(PriorityQueue H);
-ElementType FindMin(PriorityQueue H);
-bool TryFindMin(PriorityQueue H, ElementType *found);
-int IsEmpty(PriorityQueue H);
-int IsFull(PriorityQueue H);
+PriorityQueue HeapInit(int MaxElements);
+void HeapDestroy(PriorityQueue H);
+void HeapMakeEmpty(PriorityQueue H);
+void HeapInsert(ElementType X, PriorityQueue H);
+ElementType HeapDeleteMin(PriorityQueue H);
+ElementType HeapPeekMin(PriorityQueue H);
+bool HeapTryFindMin(PriorityQueue H, ElementType *found);
+int HeapIsEmpty(PriorityQueue H);
+int HeapIsFull(PriorityQueue H);
 
 #endif

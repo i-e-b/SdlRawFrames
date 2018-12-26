@@ -127,9 +127,10 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
             ti % 255, ti % 255, 255);
     }
 
+    auto scale = (frame * 3) % 500;
     EllipseHole(scanBuf,
-        400, 300, 400, 300,
-        20,
+        400, 300, 10 + scale, 10 + scale,
+        1,
         0, 0, 0);
 }
 

@@ -12,7 +12,7 @@ struct HeapStruct {
     ElementType *Elements;
 };
 
-PriorityQueue Initialize(int MaxElements) {
+PriorityQueue HeapInit(int MaxElements) {
     PriorityQueue H;
 
     if (MaxElements < MinPQSize)
@@ -37,7 +37,7 @@ PriorityQueue Initialize(int MaxElements) {
     return H;
 }
 
-void MakeEmpty(PriorityQueue H) {
+void HeapMakeEmpty(PriorityQueue H) {
     H->Size = 0;
 }
 
@@ -51,8 +51,8 @@ bool Compare(ElementType A, ElementType B) {
     return A.identifier > B.identifier; // depths are equal, use identifier
 }
 
-void Insert(ElementType X, PriorityQueue H) {
-    if (IsFull(H)) { return; }
+void HeapInsert(ElementType X, PriorityQueue H) {
+    if (HeapIsFull(H)) { return; }
 
     int i;
 
@@ -64,11 +64,11 @@ void Insert(ElementType X, PriorityQueue H) {
     H->Elements[i] = X;
 }
 
-ElementType DeleteMin(PriorityQueue H) {
+ElementType HeapDeleteMin(PriorityQueue H) {
     int i, Child;
     ElementType MinElement, LastElement;
 
-    if (IsEmpty(H)) {
+    if (HeapIsEmpty(H)) {
         return H->Elements[0]; // our empty value
     }
     MinElement = H->Elements[1];
@@ -87,29 +87,29 @@ ElementType DeleteMin(PriorityQueue H) {
     return MinElement;
 }
 
-ElementType FindMin(PriorityQueue H) {
-    if (!IsEmpty(H)) return H->Elements[1];
+ElementType HeapPeekMin(PriorityQueue H) {
+    if (!HeapIsEmpty(H)) return H->Elements[1];
 
     return H->Elements[0];
 }
 
-bool TryFindMin(PriorityQueue H, ElementType *found) {
-    if (!IsEmpty(H)) {
+bool HeapTryFindMin(PriorityQueue H, ElementType *found) {
+    if (!HeapIsEmpty(H)) {
         *found = H->Elements[1];
         return true;
     }
     return false;
 }
 
-int IsEmpty(PriorityQueue H) {
+int HeapIsEmpty(PriorityQueue H) {
     return H->Size == 0;
 }
 
-int IsFull(PriorityQueue H) {
+int HeapIsFull(PriorityQueue H) {
     return H->Size == H->Capacity;
 }
 
-void Destroy(PriorityQueue H) {
+void HeapDestroy(PriorityQueue H) {
     free(H->Elements);
     free(H);
 }

@@ -24,15 +24,15 @@ ScanBuffer * InitScanBuffer(int width, int height)
         free(buf); return NULL;
     }
 
-    buf->p_heap = Initialize(32000);
+    buf->p_heap = HeapInit(32000);
     if (buf->p_heap == NULL) {
         free(buf->list);
         return NULL;
     }
 
-    buf->r_heap = Initialize(32000);
+    buf->r_heap = HeapInit(32000);
     if (buf->r_heap == NULL) {
-        Destroy((PriorityQueue)buf->p_heap);
+        HeapDestroy((PriorityQueue)buf->p_heap);
         free(buf->list);
         return NULL;
     }
@@ -50,8 +50,8 @@ void FreeScanBuffer(ScanBuffer * buf)
 {
     if (buf == NULL) return;
     if (buf->list != NULL) free(buf->list);
-    if (buf->p_heap != NULL) Destroy((PriorityQueue)buf->p_heap);
-    if (buf->r_heap != NULL) Destroy((PriorityQueue)buf->r_heap);
+    if (buf->p_heap != NULL) HeapDestroy((PriorityQueue)buf->p_heap);
+    if (buf->r_heap != NULL) HeapDestroy((PriorityQueue)buf->r_heap);
     free(buf);
 }
 
@@ -60,6 +60,7 @@ void GrowBuffer(ScanBuffer * buf) {
     cout << "\r\nShould have extended the buffer. Will fail!";
 }
 
+// Set a point with an exact position. Do your own clipping
 inline void SetSP(ScanBuffer * buf, uint32_t pos, int z, uint32_t color, uint8_t meta) {
     SwitchPoint sp;
     sp.id = buf->itemCount;
@@ -72,10 +73,14 @@ inline void SetSP(ScanBuffer * buf, uint32_t pos, int z, uint32_t color, uint8_t
     buf->count++;
 }
 
+// set a point with L/R clipping
 inline void SetSP(ScanBuffer * buf, int x, int y, int z, uint32_t color, uint8_t meta) {
+    int nx = (x < 0) ? 0 : x;
+    if (nx >= buf->width) nx = buf->width - 1;
+
     SwitchPoint sp;
     sp.id = buf->itemCount;
-    sp.pos = (y * buf->width) + x;
+    sp.pos = (y * buf->width) + nx;
     sp.depth = z;
     sp.material = color;
     sp.meta = meta;
@@ -164,46 +169,49 @@ void FillCircle(ScanBuffer *buf,
         r, g, b);
 }
 
-void FillEllipse(ScanBuffer *buf,
+
+void GeneralEllipse(ScanBuffer *buf,
     int xc, int yc, int width, int height,
-    int z,
+    int z, bool positive,
     int r, int g, int b)
 {
-
-    if (z < 0) return; // behind camera
-    buf->itemCount++;
     uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+
+    uint8_t left = (positive) ? (ON) : (OFF);
+    uint8_t right = (positive) ? (OFF) : (ON);
 
     int a2 = width * width;
     int b2 = height * height;
     int fa2 = 4 * a2, fb2 = 4 * b2;
-    int x, y, sigma;
+    int x, y, ty, sigma;
 
     // Top and bottom (need to ensure we don't double the scanlines)
     for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
         if (sigma >= 0) {
             sigma += fa2 * (1 - y);
             // only draw scan points when we change y
-            SetSP(buf, xc - x, yc + y, z, color, ON);
-            SetSP(buf, xc + x, yc + y, z, color, OFF);
+            SetSP(buf, xc - x, yc + y, z, color, left);
+            SetSP(buf, xc + x, yc + y, z, color, right);
 
-            SetSP(buf, xc - x, yc - y, z, color, ON);
-            SetSP(buf, xc + x, yc - y, z, color, OFF);
+            SetSP(buf, xc - x, yc - y, z, color, left);
+            SetSP(buf, xc + x, yc - y, z, color, right);
             y--;
         }
         sigma += b2 * ((4 * x) + 6);
     }
+    ty = y; // prevent overwrite
 
     // Left and right
-    SetSP(buf, xc - width, yc, z, color, ON);
-    SetSP(buf, xc + width, yc, z, color, OFF);
+    SetSP(buf, xc - width, yc, z, color, left);
+    SetSP(buf, xc + width, yc, z, color, right);
     for (x = width, y = 1, sigma = 2 * a2 + b2 * (1 - 2 * width); a2*y < b2 * x; y++) {
+        if (y > ty) break; // started to overlap 'top-and-bottom'
 
-        SetSP(buf, xc - x, yc + y, z, color, ON);
-        SetSP(buf, xc + x, yc + y, z, color, OFF);
+        SetSP(buf, xc - x, yc + y, z, color, left);
+        SetSP(buf, xc + x, yc + y, z, color, right);
 
-        SetSP(buf, xc - x, yc - y, z, color, ON);
-        SetSP(buf, xc + x, yc - y, z, color, OFF);
+        SetSP(buf, xc - x, yc - y, z, color, left);
+        SetSP(buf, xc + x, yc - y, z, color, right);
 
         if (sigma >= 0) {
             sigma += fb2 * (1 - x);
@@ -213,6 +221,20 @@ void FillEllipse(ScanBuffer *buf,
     }
 }
 
+
+void FillEllipse(ScanBuffer *buf,
+    int xc, int yc, int width, int height,
+    int z,
+    int r, int g, int b)
+{
+    if (z < 0) return; // behind camera
+    buf->itemCount++;
+
+    GeneralEllipse(buf,
+        xc, yc, width, height,
+        z, true,
+        r, g, b);
+}
 
 void EllipseHole(ScanBuffer *buf,
     int xc, int yc, int width, int height,
@@ -227,44 +249,10 @@ void EllipseHole(ScanBuffer *buf,
     SetSP(buf, 0, z, color, ON);
 
     // Same as ellipse, but with on and off flipped to make hole
-
-    int a2 = width * width;
-    int b2 = height * height;
-    int fa2 = 4 * a2, fb2 = 4 * b2;
-    int x, y, sigma;
-
-    // Top and bottom (need to ensure we don't double the scanlines)
-    for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
-        if (sigma >= 0) {
-            sigma += fa2 * (1 - y);
-            // only draw scan points when we change y
-            SetSP(buf, xc - x, yc + y, z, color, OFF);
-            SetSP(buf, xc + x, yc + y, z, color, ON);
-
-            SetSP(buf, xc - x, yc - y, z, color, OFF);
-            SetSP(buf, xc + x, yc - y, z, color, ON);
-            y--;
-        }
-        sigma += b2 * ((4 * x) + 6);
-    }
-
-    // Left and right
-    SetSP(buf, xc - width, yc, z, color, OFF);
-    SetSP(buf, xc + width, yc, z, color, ON);
-    for (x = width, y = 1, sigma = 2 * a2 + b2 * (1 - 2 * width); a2*y < b2 * x; y++) {
-
-        SetSP(buf, xc - x, yc + y, z, color, OFF);
-        SetSP(buf, xc + x, yc + y, z, color, ON);
-
-        SetSP(buf, xc - x, yc - y, z, color, OFF);
-        SetSP(buf, xc + x, yc - y, z, color, ON);
-
-        if (sigma >= 0) {
-            sigma += fb2 * (1 - x);
-            x--;
-        }
-        sigma += a2 * ((4 * y) + 6);
-    }
+    GeneralEllipse(buf,
+        xc, yc, width, height,
+        z, false,
+        r, g, b);
 }
 
 // Fill a quad given 3 points
@@ -380,8 +368,8 @@ void RenderBuffer(
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
     auto r_heap = (PriorityQueue)buf->r_heap;   // removal heap
     
-    MakeEmpty(p_heap);
-    MakeEmpty(r_heap);
+    HeapMakeEmpty(p_heap);
+    HeapMakeEmpty(r_heap);
 
     uint32_t end = bufSize / 4; // end of data in 32bit words
 
@@ -404,22 +392,22 @@ void RenderBuffer(
 
         auto heapElem = ElementType{ /*depth:*/ sw.depth, /*unique id:*/ sw.id, /*lookup index:*/ i };
         if (sw.meta & 0x01) { // 'on' point, add to presentation heap
-            Insert(heapElem, p_heap);
+            HeapInsert(heapElem, p_heap);
         } else { // 'off' point, add to removal heap
-            Insert(heapElem, r_heap);
+            HeapInsert(heapElem, r_heap);
         }
 
         // while top of p_heap and r_heap match, remove both.
         auto nextRemove = ElementType{ 0,-1,0 };
         auto top = ElementType{ 0,-1,0 };
-        while (TryFindMin(p_heap, &top) && TryFindMin(r_heap, &nextRemove)
+        while (HeapTryFindMin(p_heap, &top) && HeapTryFindMin(r_heap, &nextRemove)
             && top.identifier == nextRemove.identifier) {
-            DeleteMin(r_heap);
-            DeleteMin(p_heap);
+            HeapDeleteMin(r_heap);
+            HeapDeleteMin(p_heap);
         }
 
         // set color for next run based on top of p_heap
-        on = ! IsEmpty(p_heap);
+        on = ! HeapIsEmpty(p_heap);
         if (on) {
             color = list[top.lookup].material;
         }
