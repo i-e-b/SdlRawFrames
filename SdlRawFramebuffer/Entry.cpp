@@ -54,7 +54,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         230, 170,
         270, 150,
         4, 200, 255, 200);
-    FillTrangle(scanBuf, 230 + rx, 130 + ry, 235 + rx, 135 + ry, 225 + rx, 135 + ry, 3, 255, 255, 255);
+    FillCircle(scanBuf, 230 + rx, 130 + ry, 5, 3, 255, 255, 255);
 
     FillTrangle(scanBuf, // ccw
         470, 150,
@@ -77,18 +77,55 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         10,          // middle
         255, 0, 0);  // red
 
+    FillRect(scanBuf,
+        150, 100, 200, 200,
+        8,
+        0, 200, 0);
+
+    FillEllipse(scanBuf,
+        300, 300, 100, 35,
+        3,
+        120, 140, 110);
+
+    FillCircle(scanBuf,
+        300, 300, 5,
+        2,
+        255, 255, 255);
+
+    // a little pseudo 3d box
+    FillTriQuad(scanBuf,
+        50, 400,
+        65, 410,
+        55, 500,
+        2,
+        220, 0, 255);
+
+    FillTriQuad(scanBuf,
+        65, 410,
+        130, 370,
+        70, 510,
+        2,
+        255, 120, 255);
+
+    FillTriQuad(scanBuf,
+        50, 400,
+        65, 410,
+        115, 360,
+        2,
+        255, 200, 255);
+
     // a whole bunch of small triangles
     // to torture test. Also wraps top/bottom
-    /*for (int ti = 0; ti < 6000; ti++) {
-        auto oti = (frame + ti * 7) % 800;
+    for (int ti = 0; ti < 6000; ti++) {
+        auto oti = (frame + ti * 18) % 820;
         auto yti = (ti >> 3);
         FillTrangle(scanBuf,
-            5 + oti, 0 + yti,
+            -5 + oti, 0 + yti,
+            -10 + oti, -10 + yti,
             0 + oti, -10 + yti,
-            10 + oti, -10 + yti,
             ti + 3,
             ti % 255, ti % 255, 255);
-    }*/
+    }
 }
 
 

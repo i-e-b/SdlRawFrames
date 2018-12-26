@@ -6,6 +6,9 @@
 #include <iostream>
 using namespace std;
 
+#define ON 0x01
+#define OFF 0x00
+
 ScanBuffer * InitScanBuffer(int width, int height)
 {
     auto buf = (ScanBuffer*)calloc(1, sizeof(ScanBuffer));
@@ -57,6 +60,30 @@ void GrowBuffer(ScanBuffer * buf) {
     cout << "\r\nShould have extended the buffer. Will fail!";
 }
 
+inline void SetSP(ScanBuffer * buf, uint32_t pos, int z, uint32_t color, uint8_t meta) {
+    SwitchPoint sp;
+    sp.id = buf->itemCount;
+    sp.pos = pos;
+    sp.depth = z;
+    sp.material = color;
+    sp.meta = meta;
+
+    buf->list[buf->count] = sp;
+    buf->count++;
+}
+
+inline void SetSP(ScanBuffer * buf, int x, int y, int z, uint32_t color, uint8_t meta) {
+    SwitchPoint sp;
+    sp.id = buf->itemCount;
+    sp.pos = (y * buf->width) + x;
+    sp.depth = z;
+    sp.material = color;
+    sp.meta = meta;
+
+    buf->list[buf->count] = sp;
+    buf->count++;
+}
+
 // INTERNAL: Write scan switch points into buffer for a single line.
 //           Used to draw any other polygons
 void SetLine(
@@ -76,9 +103,9 @@ void SetLine(
     uint8_t flags;
     
     if (y0 < y1) { // going down
-        flags = 0x00; // 'off' line
+        flags = OFF; // 'off' line
     } else { // going up
-        flags = 0x01; // 'on' line
+        flags = ON; // 'on' line
         // swap coords so we can always calculate down (always 1 entry per y coord)
         int tmp;
         tmp = x0; x0 = x1; x1 = tmp;
@@ -102,17 +129,117 @@ void SetLine(
         if (ox > w) ox = w;
         uint32_t addr = ((i + top) * w) + ox;
 
-        SwitchPoint sp;
-        sp.id = buf->itemCount;
-        sp.pos = addr;
-        sp.depth = z;
-        sp.material = color;
-        sp.meta = flags;
-
-        buf->list[buf->count] = sp;
-        buf->count++;
+        SetSP(buf, addr, z, color, flags);
     }
 
+}
+
+
+// Fill an axis aligned rectangle
+void FillRect(ScanBuffer *buf,
+    int left, int top, int right, int bottom,
+    int z,
+    int r, int g, int b)
+{
+    if (z < 0) return; // behind camera
+    if (left >= right || top >= bottom) return; //empty
+    buf->itemCount++;
+    SetLine(buf,
+        left, bottom,
+        left, top,
+        z, r, g, b);
+    SetLine(buf,
+        right, top,
+        right, bottom,
+        z, r, g, b);
+}
+
+void FillCircle(ScanBuffer *buf,
+    int x, int y, int radius,
+    int z,
+    int r, int g, int b) {
+    FillEllipse(buf,
+        x, y, radius * 2, radius * 2,
+        z,
+        r, g, b);
+}
+
+void FillEllipse(ScanBuffer *buf,
+    int xc, int yc, int width, int height,
+    int z,
+    int r, int g, int b)
+{
+    if (height < 1 || width < 1) return;
+    if (z < 0) return; // behind camera
+    buf->itemCount++;
+
+    int a2 = width * width;
+    int b2 = height * height;
+    int fa2 = 4 * a2, fb2 = 4 * b2;
+    int x, y, sigma;
+
+    uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+
+    // Top and bottom (need to ensure we don't double the scanlines)
+    for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
+        if (sigma >= 0) {
+            sigma += fa2 * (1 - y);
+            // only draw scan points when we change y
+            SetSP(buf, xc - x, yc + y, z, color, ON);
+            SetSP(buf, xc + x, yc + y, z, color, OFF);
+
+            SetSP(buf, xc - x, yc - y, z, color, ON);
+            SetSP(buf, xc + x, yc - y, z, color, OFF);
+            y--;
+        }
+        sigma += b2 * ((4 * x) + 6);
+    }
+
+    // Left and right
+    for (x = width, y = 0, sigma = 2 * a2 + b2 * (1 - 2 * width); a2*y <= b2 * x; y++) {
+        SetSP(buf, xc - x, yc + y, z, color, ON);
+        SetSP(buf, xc + x, yc + y, z, color, OFF);
+
+        SetSP(buf, xc - x, yc - y, z, color, ON);
+        SetSP(buf, xc + x, yc - y, z, color, OFF);
+
+        if (sigma >= 0) {
+            sigma += fb2 * (1 - x);
+            x--;
+        }
+        sigma += a2 * ((4 * y) + 6);
+    }
+}
+
+// Fill a quad given 3 points
+void FillTriQuad(ScanBuffer *buf,
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    int z,
+    int r, int g, int b) {
+    // Basically the same as triangle, but we also draw a mirror image across the xy1/xy2 plane
+    if (buf == NULL) return;
+    if (z < 0) return; // behind camera
+    buf->itemCount++;
+
+    if (x2 == x1 && y1 == y2) return; // empty
+
+    // Cross product (finding only z)
+    // this tells us if we are clockwise or ccw.
+    int dx1 = x1 - x0; int dx2 = x2 - x0;
+    int dy1 = y1 - y0; int dy2 = y2 - y0;
+    int dz = dx1 * dy2 - dy1 * dx2;
+
+    if (dz <= 0) { // ccw
+        auto tmp = x1; x1 = x2; x2 = tmp;
+        tmp = y1; y1 = y2; y2 = tmp;
+        dx1 = dx2; dy1 = dy2;
+    }
+    SetLine(buf, x0, y0, x1, y1, z, r, g, b);
+    SetLine(buf, x1, y1, x2 + dx1, y2 + dy1, z, r, g, b);
+    SetLine(buf, x2 + dx1, y2 + dy1, x2, y2, z, r, g, b);
+    SetLine(buf, x2, y2, x0, y0, z, r, g, b);
 }
 
 // Fill a triagle with a solid colour

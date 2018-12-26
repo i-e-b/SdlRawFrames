@@ -44,6 +44,30 @@ void FillTrangle( ScanBuffer *buf,
     int z,
     int r, int g, int b);
 
+// Fill an axis aligned rectangle
+void FillRect(ScanBuffer *buf,
+    int left, int top, int right, int bottom,
+    int z,
+    int r, int g, int b);
+
+void FillCircle(ScanBuffer *buf,
+    int x, int y, int radius,
+    int z,
+    int r, int g, int b);
+
+void FillEllipse(ScanBuffer *buf,
+    int xc, int yc, int width, int height,
+    int z,
+    int r, int g, int b);
+
+// Fill a quad given 3 points
+void FillTriQuad(ScanBuffer *buf,
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2,
+    int z,
+    int r, int g, int b);
+
 // Set a background plane
 void SetBackground( ScanBuffer *buf,
     int z, // depth of the background. Anything behind this will be invisible
