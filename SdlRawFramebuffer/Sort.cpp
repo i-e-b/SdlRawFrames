@@ -3,8 +3,6 @@
 
 // Merge with minimal copies
 void iterativeMergeSort(SwitchPoint arr1[], int n) {
-    SwitchPoint *arr2 = (SwitchPoint*)malloc((n) * sizeof(SwitchPoint));
-
     // a first pass swapping pairs (as this can be done in place)
     for (int i = 0; i < n-2; i+=2) {
         if (arr1[i+1].pos < arr1[i].pos) {
@@ -12,6 +10,7 @@ void iterativeMergeSort(SwitchPoint arr1[], int n) {
         }
     }
 
+    SwitchPoint *arr2 = (SwitchPoint*)malloc((n) * sizeof(SwitchPoint)); // aux buffer
     auto A = arr2; // we will be flipping the array pointers around
     auto B = arr1;
 

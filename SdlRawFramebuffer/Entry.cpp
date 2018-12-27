@@ -45,7 +45,7 @@ int RenderWorker(void* data)
 void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     ClearScanBuffer(scanBuf); // wipe out buffer
 
-    SetBackground(scanBuf, 10000, 0, 0, 0);
+    SetBackground(scanBuf, 10000, 50, 80, 70);
 
     auto rx = sin(frame / 128.0f) * 80;
     auto ry = -cos(frame / 128.0f) * 80;
@@ -84,12 +84,12 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 
     FillEllipse(scanBuf,
         300, 300, 100, 35,
-        3,
+        4,
         120, 140, 110);
 
     FillCircle(scanBuf,
         300, 300, 5,
-        2,
+        3,
         255, 255, 255);
 
     // a little pseudo 3d box
@@ -97,21 +97,21 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         50, 400,
         65, 410,
         55, 500,
-        2,
+        1,
         220, 0, 255);
 
     FillTriQuad(scanBuf,
         65, 410,
         130, 370,
         70, 510,
-        2,
+        1,
         255, 120, 255);
 
     FillTriQuad(scanBuf,
         50, 400,
         65, 410,
         115, 360,
-        2,
+        1,
         255, 200, 255);
 
     // a whole bunch of small triangles
@@ -130,7 +130,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     auto scale = (frame * 3) % 500;
     EllipseHole(scanBuf,
         400, 300, 10 + scale, 10 + scale,
-        1,
+        2,
         0, 0, 0);
 }
 
