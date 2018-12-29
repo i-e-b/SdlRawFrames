@@ -286,6 +286,46 @@ void FillTriQuad(ScanBuffer *buf,
     SetLine(buf, x2, y2, x0, y0, z, r, g, b);
 }
 
+void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, int r, int g, int b)
+{
+    // TODO: use triquad and the gradient's normal to draw
+    float ndy = x1 - x0;
+    float ndx = -(y1 - y0);
+
+    // normalise
+    float mag = sqrt((ndy*ndy) + (ndx*ndx));
+    if (mag == 0) return; // no line
+    ndx *= w / mag;
+    ndy *= w / mag;
+
+    // Centre points on line width 
+    x0 -= (int)(ndx / 2);
+    y0 -= (int)(ndy / 2);
+    x1 -= (int)(ndx / 2);
+    y1 -= (int)(ndy / 2);
+
+    FillTriQuad(buf, x0, y0, x1, y1,
+        x0 + (int)(ndx), y0 + (int)(ndy),
+        z, r, g, b);
+}
+
+void OutlineEllipse(ScanBuffer * buf, int xc, int yc, int width, int height, int z, int w, int r, int g, int b)
+{
+    if (z < 0) return; // behind camera
+    buf->itemCount++;
+
+    int w1 = w / 2;
+    int w2 = w - w1;
+
+    GeneralEllipse(buf,
+        xc, yc, width + w2, height + w2,
+        z, true, r, g, b);
+
+    GeneralEllipse(buf,
+        xc, yc, width - w1, height - w1,
+        z, false, r, g, b);
+}
+
 // Fill a triagle with a solid colour
 // Triangle must be clockwise winding (if dy is -ve, line is 'on', otherwise line is 'off')
 // counter-clockwise contours are detected and rearraged

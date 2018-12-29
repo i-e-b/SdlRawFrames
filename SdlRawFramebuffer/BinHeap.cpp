@@ -101,6 +101,24 @@ bool HeapTryFindMin(PriorityQueue H, ElementType *found) {
     return false;
 }
 
+// find the 2nd least element
+bool HeapTryFindNext(PriorityQueue H, ElementType * found)
+{
+    if (H->Size < 2) return false;
+    if (H->Size == 2) {
+        *found = H->Elements[2];
+        return true;
+    }
+    // inspect top two and pick the smallest
+    if (Compare(H->Elements[2], H->Elements[3])) {
+        *found = H->Elements[3];
+    } else {
+        *found = H->Elements[2];
+    }
+
+    return true;
+}
+
 int HeapIsEmpty(PriorityQueue H) {
     return H->Size == 0;
 }

@@ -15,11 +15,13 @@ Implemented:
 
 Planned:
 --------
-* [ ] Antialiasing for scan-buffer
+* [ ] 'rewind' scan buffer (to allow drawing a background once, and draw dynamic elems multiple times from it)
+* [ ] Antialiasing for scan buffer
 * [ ] Alpha-layers in scan buffer
 * [ ] Font reader and renderer (with scan-buffer switch point caching and rendering)
 * [ ] Gourad (linear) shading
 * [ ] logical geometry for shapes in scan buffer (union, subtract, intersect, x-or)
+* [ ] Texturing, with 1-bit alpha (use peek next layer)
 * [ ] Affine texturing
 * [ ] Perspective texturing
 * [ ] Auto buffer scaling

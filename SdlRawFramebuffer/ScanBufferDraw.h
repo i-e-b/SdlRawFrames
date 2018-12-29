@@ -68,6 +68,19 @@ void FillTriQuad(ScanBuffer *buf,
     int z,
     int r, int g, int b);
 
+// draw a line with width
+void DrawLine(ScanBuffer *buf,
+    int x0, int y0,
+    int x1, int y1,
+    int z, int w, // width
+    int r, int g, int b);
+
+// draw the border of an ellipse
+void OutlineEllipse(ScanBuffer *buf,
+    int xc, int yc, int width, int height,
+    int z, int w, // outline width
+    int r, int g, int b);
+
 // Set a background plane
 void SetBackground( ScanBuffer *buf,
     int z, // depth of the background. Anything behind this will be invisible

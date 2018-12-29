@@ -82,9 +82,9 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         8,
         0, 200, 0);
 
-    FillEllipse(scanBuf,
+    OutlineEllipse(scanBuf,
         300, 300, 100, 35,
-        4,
+        4, 5,
         120, 140, 110);
 
     FillCircle(scanBuf,
@@ -114,6 +114,13 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         1,
         255, 200, 255);
 
+    DrawLine(scanBuf,
+        500, 500,
+        500 + rx, 500 + ry,
+        5, 15, // width
+        255, 255, 0);
+
+    /*
     // a whole bunch of small triangles
     // as a torture test. Also wraps top/bottom
     for (int ti = 0; ti < 6000; ti++) {
@@ -131,7 +138,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     EllipseHole(scanBuf,
         400, 300, 10 + scale, 10 + scale,
         2,
-        0, 0, 0);
+        0, 0, 0);*/
 }
 
 
