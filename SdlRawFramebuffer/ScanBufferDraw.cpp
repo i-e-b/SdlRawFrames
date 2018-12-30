@@ -267,7 +267,7 @@ void FillTriQuad(ScanBuffer *buf,
     if (z < 0) return; // behind camera
     buf->itemCount++;
 
-    if (x2 == x1 && y1 == y2) return; // empty
+    if (x2 == x1 && x0 == x1 && y0 == y1 && y1 == y2) return; // empty
 
     // Cross product (finding only z)
     // this tells us if we are clockwise or ccw.
@@ -288,7 +288,11 @@ void FillTriQuad(ScanBuffer *buf,
 
 void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, int r, int g, int b)
 {
-    // TODO: use triquad and the gradient's normal to draw
+    if (w < 1) return; // empty
+
+    // TODO: special case for w < 2
+
+    // Use triquad and the gradient's normal to draw
     float ndy = x1 - x0;
     float ndx = -(y1 - y0);
 
@@ -298,11 +302,14 @@ void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, in
     ndx *= w / mag;
     ndy *= w / mag;
 
+    int hdx = (int)(ndx / 2);
+    int hdy = (int)(ndy / 2);
+
     // Centre points on line width 
-    x0 -= (int)(ndx / 2);
-    y0 -= (int)(ndy / 2);
-    x1 -= (int)(ndx / 2);
-    y1 -= (int)(ndy / 2);
+    x0 -= hdx;
+    y0 -= hdy;
+    x1 -= (int)(ndx - hdx);
+    y1 -= (int)(ndy - hdy);
 
     FillTriQuad(buf, x0, y0, x1, y1,
         x0 + (int)(ndx), y0 + (int)(ndy),

@@ -3,12 +3,22 @@
 
 // Merge with minimal copies
 void iterativeMergeSort(SwitchPoint arr1[], int n) {
+    bool anySwaps = false;
+
     // a first pass swapping pairs (as this can be done in place)
-    for (int i = 0; i < n-2; i+=2) {
-        if (arr1[i+1].pos < arr1[i].pos) {
+    for (int i = 1; i < n - 3; i += 2) { // a run offset by one (allows us to test for a pre-sorted array)
+        if (arr1[i + 1].pos < arr1[i].pos) {
             auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
+            anySwaps = true;
         }
     }
+    for (int i = 0; i < n - 2; i += 2) { // 2^n aligned run (critical to the merge algorithm)
+        if (arr1[i+1].pos < arr1[i].pos) {
+            auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
+            anySwaps = true;
+        }
+    }
+    if (!anySwaps) return;
 
     SwitchPoint *arr2 = (SwitchPoint*)malloc((n) * sizeof(SwitchPoint)); // aux buffer
     auto A = arr2; // we will be flipping the array pointers around

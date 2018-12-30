@@ -19,6 +19,7 @@ SDL_mutex* gDataLock = NULL; // Data access semaphore, for the read buffer
 ScanBuffer *BufferA, *BufferB; // pair of scanline buffers. One is written while the other is read
 volatile bool quit = false; // Quit flag
 volatile int writeBuffer = 0; // which buffer is being written (other will be read)
+volatile int frameWait = 0; // frames waiting
 BYTE* base = NULL; // graphics base
 int rowBytes = 0;
 int frameByteSize = 0;
@@ -26,17 +27,23 @@ int frameByteSize = 0;
 // Scanline buffer to pixel buffer rendering on a separate thread
 int RenderWorker(void* data)
 {
+    while (base == NULL) {
+        SDL_Delay(5);
+    }
     while (!quit) {
-        SDL_Delay(5); // give the other loop a chance to lock
-        if (base == NULL) continue;
+        while (frameWait < 1) {
+            SDL_Delay(1); // pause the thread until a new scan buffer is ready
+        }
 
-        SDL_LockMutex(gDataLock); //Lock
-        
+        SDL_LockMutex(gDataLock);
         auto scanBuf = (writeBuffer > 0) ? BufferA : BufferB; // must be opposite way to writing loop
+        SDL_UnlockMutex(gDataLock);
 
         RenderBuffer(scanBuf, base, rowBytes, frameByteSize);
 
-        SDL_UnlockMutex(gDataLock); //Unlock
+        SDL_LockMutex(gDataLock);
+        frameWait = 0;
+        SDL_UnlockMutex(gDataLock);
     }
     return 0;
 }
@@ -120,7 +127,13 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         5, 15, // width
         255, 255, 0);
 
-    /*
+    DrawLine(scanBuf,
+        500, 500,
+        500 + ry, 500 + rx,
+        5, 2, // width
+        255, 0, 255);
+
+    
     // a whole bunch of small triangles
     // as a torture test. Also wraps top/bottom
     for (int ti = 0; ti < 6000; ti++) {
@@ -138,7 +151,8 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     EllipseHole(scanBuf,
         400, 300, 10 + scale, 10 + scale,
         2,
-        0, 0, 0);*/
+        0, 0, 0);
+        
 }
 
 
@@ -193,15 +207,22 @@ int main(int argc, char * argv[])
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // Draw loop                                                                                      //
     ////////////////////////////////////////////////////////////////////////////////////////////////////
+    auto scanBuf = BufferA;
     for (auto frame = 0; frame < animationFrames; frame++) {
         long fst = SDL_GetTicks();
 
-        // Wait for frame render to finish, then swap buffers and do next
-        SDL_LockMutex(gDataLock);                               // lock
         SDL_UpdateWindowSurface(window);                        // update the surface -- need to do this every frame.
-        writeBuffer = 1 - writeBuffer;                          // switch buffer
-        auto scanBuf = (writeBuffer > 0) ? BufferB : BufferA;   // must be opposite way to writing loop
-        SDL_UnlockMutex(gDataLock);                             // unlock
+
+        // Wait for frame render to finish, then swap buffers and do next
+        if (frameWait < 1) {
+            // Swap buffers, we will render one to pixels while we're issuing draw commands to the other
+            // If render can't keep up with framewait, we skip this frame and draw to the same buffer.
+            SDL_LockMutex(gDataLock);                               // lock
+            writeBuffer = 1 - writeBuffer;                          // switch buffer
+            scanBuf = (writeBuffer > 0) ? BufferB : BufferA;        // MUST be opposite way to writing loop
+            frameWait = 1;                                          // signal to the other thread that the buffer has changed
+            SDL_UnlockMutex(gDataLock);                             // unlock
+        }
 
         // Pick the write buffer and set switch points:
         DrawToScanBuffer(scanBuf, frame);

@@ -15,6 +15,7 @@ Implemented:
 
 Planned:
 --------
+* [ ] Image loading
 * [ ] 'rewind' scan buffer (to allow drawing a background once, and draw dynamic elems multiple times from it)
 * [ ] Antialiasing for scan buffer
 * [ ] Alpha-layers in scan buffer
