@@ -388,6 +388,20 @@ void ClearScanBuffer(ScanBuffer * buf)
     buf->count = 0; // set occupancy to zero. All the old scanline values remain, but we ignore them
 }
 
+// blend two colors, by a proportion (0..255)
+uint32_t Blend(int prop1, uint32_t color1, uint32_t color2) {
+    int prop2 = 255 - prop1;
+    int r = prop1 * ((color1 & 0x00FF0000) >> 16);
+    int g = prop1 * ((color1 & 0x0000FF00) >> 8);
+    int b = prop1 * (color1 & 0x000000FF);
+
+    r += prop2 * ((color2 & 0x00FF0000) >> 16);
+    g += prop2 * ((color2 & 0x0000FF00) >> 8);
+    b += prop2 * (color2 & 0x000000FF);
+
+    // everything needs shifting 8 bits, we've integrated it into the color merge
+    return ((r & 0xff00) << 8) + ((g & 0xff00)) + ((b >> 8) & 0xff);
+}
 
 // Render a scan buffer to a pixel framebuffer
 // This can be done on a different processor core from other draw commands to spread the load
@@ -399,7 +413,7 @@ void RenderBuffer(
 ) {
     if (buf == NULL || data == NULL) return;
 
-    // TODO: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
+    // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
     iterativeMergeSort(buf->list, buf->count);
 
     auto list = buf->list;
@@ -415,7 +429,8 @@ void RenderBuffer(
 
     bool on = false;
     uint32_t p = 0; // current pixel
-    uint32_t color;
+    uint32_t color; // color of current object
+    uint32_t color_under; // color of next object down
     for (int i = 0; i < count; i++)
     {
         SwitchPoint sw = list[i];
@@ -452,6 +467,21 @@ void RenderBuffer(
             color = list[top.lookup].material;
         }
 
+
+#if 0
+        // EXPERIMENT: blend with next layer down...
+        auto nextObj = ElementType{ 0,-1,0 };
+        if (HeapTryFindNext(p_heap, &nextObj)) {
+            // if it's on the remove heap, we don't want to blend. It should be top if so.
+            if (HeapPeekMin(r_heap).identifier != nextObj.identifier) {
+                color_under = list[nextObj.lookup].material;
+                color = Blend(127, color, color_under);
+            } else { // blend with black to stop things looking too weird
+                color = Blend(127, color, 0);
+            }
+        }
+        // END experiment
+#endif
 #if 0
         // DEBUG: show switch point in black
         int pixoff = ((sw.pos - 1) * 4);

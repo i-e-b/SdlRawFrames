@@ -25,3 +25,6 @@ Planned:
 * [ ] Affine texturing
 * [ ] Perspective texturing
 * [ ] Auto buffer scaling
+* [ ] Pick object id from point
+* [ ] merge two scanline buffers 
+* [ ] overlap detection (output list of ids?) 
