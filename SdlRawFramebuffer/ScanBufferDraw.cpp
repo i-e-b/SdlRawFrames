@@ -76,12 +76,12 @@ void GrowBuffer(ScanBuffer * buf) {
 }
 
 // Set a point with an exact position, clipped to bounds
-inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, bool isOn) {
+inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, int isOn) {
     if (y < 0 || y > buf->height) return;
     
    // SwitchPoint sp;
     ScanLine line = buf->scanLines[y];
-    if (line.points == NULL) {
+    /*if (line.points == NULL) {
         std::cout << "\nScan buffer not ready";
         return;
     }
@@ -89,7 +89,7 @@ inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, bool isOn) 
         std::cout << "\nOverflow!";
         buf->scanLines[y].count = 0;
         return;
-    }
+    }*/
     if (line.count >= line.length) return; // buffer full. TODO: grow?
 
 
@@ -97,7 +97,7 @@ inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, bool isOn) 
 
     sp.xpos = (x < 0) ? 0 : x;
     sp.id = objectId;
-    sp.state = isOn ? 1 : 0;
+    sp.state = isOn;
 
     buf->scanLines[y].points[line.count] = sp; // write back changes
     buf->scanLines[y].count++; // increment pointer

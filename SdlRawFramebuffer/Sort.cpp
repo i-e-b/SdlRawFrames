@@ -2,23 +2,32 @@
 #include <stdlib.h>
 #include <iostream>
 
-inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
+// maximal/exhaustive sort
+inline bool cmp1(SwitchPoint* a, int idx1, int idx2) {
     // first sort by position
     auto p1 = a[idx1].xpos;
     auto p2 = a[idx2].xpos;
     if (p1 < p2) return true;
     if (p1 > p2) return false;
 
-    // they are equal. Now sort by object ID
-    auto id1 = a[idx1].id;
-    auto id2 = a[idx2].id;
-    if (id1 < id2) return true;
-    if (id1 > id2) return false;
+    // then sort by object
+    p1 = a[idx1].id;
+    p2 = a[idx2].id;
+    if (p1 < p2) return true;
+    if (p1 > p2) return false;
 
     // still equal. Put on before off
     auto s1 = a[idx1].state;
     auto s2 = a[idx2].state;
     return (s1 > s2); // note this is reversed!
+}
+
+// minimal sort
+inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
+    // first sort by position
+    auto p1 = (a[idx1].xpos << 1) + a[idx1].state;
+    auto p2 = (a[idx2].xpos << 1) + a[idx2].state;
+    return (p1 < p2);
 }
 
 // Merge with minimal copies
@@ -31,13 +40,13 @@ SwitchPoint* iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
     auto A = arr2; // we will be flipping the array pointers around
     auto B = arr1;
 
-    for (int stride = 1; stride < n; stride *= 2) { // doubling merge width
+    for (int stride = 1; stride < n; stride <<= 1) { // doubling merge width
         
         // swap A and B pointers after each merge set
         { auto tmp = A; A = B; B = tmp; }
 
         int t = 0; // incrementing point in target array
-        for (int left = 0; left < n; left += 2 * stride) {
+        for (int left = 0; left < n; left += stride << 1) {
             int right = left + stride;
             int end = right + stride;
             if (end > n) end = n; // some merge windows will run off the end of the data array
@@ -64,11 +73,4 @@ SwitchPoint* iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
     }
 
     return B; // return the actual result, whatever that is.
-
-    // if we just wrote to the tmp buffer, copy everything back.
-    /*if (B == arr2) {
-        for (int i = 0; i < n; i++) {
-            arr1[i] = arr2[i];
-        }
-    }*/
 }

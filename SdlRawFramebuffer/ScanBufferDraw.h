@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef scanbufferdraw_h
+#define scanbufferdraw_h
+
 #include <stdint.h>
 
 #ifndef BYTE
@@ -116,4 +120,5 @@ void RenderBuffer(
     BYTE* data       // target frame-buffer (must match scanbuffer dimensions)
 );
 
+#endif
 
