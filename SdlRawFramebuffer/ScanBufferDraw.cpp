@@ -139,20 +139,18 @@ void SetLine(
     for (int y = top; y < bottom; y++) // skip the last pixel to stop double-counting
     {
         // add a point.
-        int x = (int)(grad * (y-top) + x0);
+        int x = (int)(grad * (y-y0) + x0);
         SetSP(buf, x, y, objectId, isOn);
     }
 
 }
 
-
-// Fill an axis aligned rectangle
-void FillRect(ScanBuffer *buf,
+// Internal: Fill an axis aligned rectangle
+void GeneralRect(ScanBuffer *buf,
     int left, int top, int right, int bottom,
     int z,
     int r, int g, int b)
 {
-    if (z < 0) return; // behind camera
     if (left >= right || top >= bottom) return; //empty
     SetLine(buf,
         left, bottom,
@@ -162,6 +160,16 @@ void FillRect(ScanBuffer *buf,
         right, top,
         right, bottom,
         z, r, g, b);
+}
+
+// Fill an axis aligned rectangle
+void FillRect(ScanBuffer *buf,
+    int left, int top, int right, int bottom,
+    int z,
+    int r, int g, int b)
+{
+    if (z < 0) return; // behind camera
+    GeneralRect(buf, left, top, right, bottom, z, r, g, b);
 
     buf->itemCount++;
 }
@@ -427,18 +435,17 @@ uint32_t Blend(int prop1, uint32_t color1, uint32_t color2) {
 void RenderScanLine(
     ScanBuffer *buf,             // source scan buffer
     int lineIndex,               // index of the line we're drawing
-    BYTE* data, int rowBytes,    // target frame-buffer
-    int bufSize                  // size of target buffer
+    BYTE* data                   // target frame-buffer
 ) {
     auto scanLine = buf->scanLines[lineIndex];
     int yoff = buf->width * lineIndex;
-
-    // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
-    iterativeMergeSort(scanLine.points, scanLine.count);
-
     auto materials = buf->materials;
     auto list = scanLine.points;
     auto count = scanLine.count;
+
+    // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
+    iterativeMergeSort(list, count);
+
     
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
     auto r_heap = (PriorityQueue)buf->r_heap;   // removal heap
@@ -446,11 +453,11 @@ void RenderScanLine(
     HeapMakeEmpty(p_heap);
     HeapMakeEmpty(r_heap);
 
-    uint32_t end = rowBytes / 4; // end of data in 32bit words
+    uint32_t end = buf->width; // end of data in 32bit words
 
     bool on = false;
     uint32_t p = 0; // current pixel
-    uint32_t color; // color of current object
+    uint32_t color = 0; // color of current object
     uint32_t color_under; // color of next object down
     for (int i = 0; i < count; i++)
     {
@@ -476,7 +483,7 @@ void RenderScanLine(
 
         // while top of p_heap and r_heap match, remove both.
         auto nextRemove = ElementType{ 0,-1,0 };
-        auto top = ElementType{ 0,0,0 };
+        auto top = ElementType{ 0,-1,0 };
         while (HeapTryFindMin(p_heap, &top) && HeapTryFindMin(r_heap, &nextRemove)
             && top.identifier == nextRemove.identifier) {
             HeapDeleteMin(r_heap);
@@ -485,8 +492,10 @@ void RenderScanLine(
 
         // set color for next run based on top of p_heap
         on = ! HeapIsEmpty(p_heap);
-        if (on) {
+        if (top.identifier >= 0) {
             color = materials[top.identifier].color;
+        } else {
+            color = 0;
         }
 
 
@@ -532,7 +541,7 @@ void RenderBuffer(
     if (buf == NULL || data == NULL) return;
 
     for (int i = 0; i < buf->height; i++) {
-        RenderScanLine(buf, i, data, rowBytes, bufSize);
+        RenderScanLine(buf, i, data);
     }
 }
 
