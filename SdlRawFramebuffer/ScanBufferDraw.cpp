@@ -17,6 +17,7 @@ ScanBuffer * InitScanBuffer(int width, int height)
     if (buf == NULL) return NULL;
 
     auto sizeEstimate = width * 2;
+    buf->expectedScanBufferSize = sizeEstimate;
 
     // Idea: Have a single list and sort by overall position rather than x (would need a background reset at each scan start?)
     //       Could also do a 'region' like difference-from-last-scanline?
@@ -24,11 +25,11 @@ ScanBuffer * InitScanBuffer(int width, int height)
     buf->materials = (Material*)calloc(OBJECT_MAX + 1, sizeof(Material));
     if (buf->materials == NULL) { FreeScanBuffer(buf); return NULL; }
 
-    buf->scanLines = (ScanLine*)calloc(height, sizeof(ScanLine));
+    buf->scanLines = (ScanLine*)calloc(height+1, sizeof(ScanLine)); // we use a spare line as sorting temp memory
     if (buf->scanLines == NULL) { FreeScanBuffer(buf); return NULL; }
 
-    for (int i = 0; i < height; i++) {
-        auto scanBuf = (SwitchPoint*)calloc(sizeEstimate, sizeof(SwitchPoint));
+    for (int i = 0; i < height + 1; i++) {
+        auto scanBuf = (SwitchPoint*)calloc(sizeEstimate + 1, sizeof(SwitchPoint));
         if (scanBuf == NULL) { FreeScanBuffer(buf); return NULL; }
         buf->scanLines[i].points = scanBuf;
         buf->scanLines[i].count = 0;
@@ -75,16 +76,26 @@ void GrowBuffer(ScanBuffer * buf) {
 }
 
 // Set a point with an exact position, clipped to bounds
-inline void SetSP(ScanBuffer * buf, uint32_t x, uint32_t y, uint16_t objectId, bool isOn) {
+inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, bool isOn) {
     if (y < 0 || y > buf->height) return;
     
    // SwitchPoint sp;
     ScanLine line = buf->scanLines[y];
+    if (line.points == NULL) {
+        std::cout << "\nScan buffer not ready";
+        return;
+    }
+    if (line.count < 0) {
+        std::cout << "\nOverflow!";
+        buf->scanLines[y].count = 0;
+        return;
+    }
     if (line.count >= line.length) return; // buffer full. TODO: grow?
+
 
     SwitchPoint sp = line.points[line.count];
 
-    sp.xpos = x;
+    sp.xpos = (x < 0) ? 0 : x;
     sp.id = objectId;
     sp.state = isOn ? 1 : 0;
 
@@ -263,7 +274,7 @@ void EllipseHole(ScanBuffer *buf,
     if (z < 0) return; // behind camera
 
     // set background
-    FillRect(buf, 0, 0, width, height, z, r, g, b);
+    GeneralRect(buf, 0, 0, buf->width, buf->height, z, r, g, b);
 
     // Same as ellipse, but with on and off flipped to make hole
     GeneralEllipse(buf,
@@ -438,13 +449,16 @@ void RenderScanLine(
     BYTE* data                   // target frame-buffer
 ) {
     auto scanLine = buf->scanLines[lineIndex];
+    auto tmpLine = buf->scanLines[buf->height];
+
     int yoff = buf->width * lineIndex;
     auto materials = buf->materials;
     auto list = scanLine.points;
     auto count = scanLine.count;
+    auto width = buf->width;
 
     // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
-    iterativeMergeSort(list, count);
+    iterativeMergeSort(list, tmpLine.points, count);
 
     
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
@@ -462,16 +476,15 @@ void RenderScanLine(
     for (int i = 0; i < count; i++)
     {
         SwitchPoint sw = list[i];
+        if (sw.xpos > width) break; // ran off the end
+
         Material m = materials[sw.id];
 
         if (sw.xpos > p) { // render up to this switch point
             if (on) {
-                for (; p < sw.xpos; p++)
-                {
-                    if (p >= end) return; // end of pixel buffer
-                    ((uint32_t*)data)[p + yoff] = color;
-                }
-            } else p = sw.xpos;
+                auto max = (sw.xpos > end) ? end : sw.xpos;
+                for (; p < max; p++) { ((uint32_t*)data)[p + yoff] = color; } // draw pixels up to the point
+            } else p = sw.xpos; // skip direct to the point
         }
 
         auto heapElem = ElementType{ /*depth:*/ m.depth, /*unique id:*/(int)sw.id, /*lookup index:*/ i };

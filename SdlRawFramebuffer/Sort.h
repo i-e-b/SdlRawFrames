@@ -3,4 +3,4 @@
 
 // Iterative mergesort function to sort arr[0...n-1]
 // Very fast, but uses lots of extra memory
-void iterativeMergeSort(SwitchPoint arr[], int n);
+void iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n);

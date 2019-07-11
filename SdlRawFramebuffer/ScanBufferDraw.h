@@ -14,10 +14,10 @@
 // Notes: 1080p resolution is 1920x1080 = 2'073'600 pixels. 2^22 is 4'194'304; 2^21 -1 = 2'097'151
 // Using per-row buffers, we only need 2048, or about 11 bits
 typedef struct SwitchPoint {
-    uint32_t xpos:11;      // position of switch-point, as (y*width)+x; (21 bits left)
-    uint32_t id:16;        // the object ID (used for material lookup, 65k limit) (5 bits left)
-    uint32_t state:1;      // 1 = 'on' point, 0 = 'off' point.
-    uint32_t reserved:4;   // not yet used.
+    uint32_t xpos:11;       // position of switch-point, as (y*width)+x; (21 bits left)
+    uint32_t id:16;         // the object ID (used for material lookup, 65k limit) (5 bits left)
+    uint32_t state:1;       // 1 = 'on' point, 0 = 'off' point.
+    uint32_t reserved:4;    // not yet used.
 } SwitchPoint;
 
 typedef struct Material {
@@ -26,8 +26,8 @@ typedef struct Material {
 } Material;
 
 typedef struct ScanLine {
-    uint32_t count;              // number of items in the array
-    uint32_t length;             // memory length of the array
+    int32_t count;          // number of items in the array
+    int32_t length;         // memory length of the array
 
     SwitchPoint* points;    // When drawing to the buffer, we can just append. Before rendering, this must be sorted by xpos
 } ScanLine;
@@ -37,6 +37,8 @@ typedef struct ScanBuffer {
     uint16_t itemCount;     // used to give each switch-point a unique ID. This is critical for the depth-sorting process
     int height;
     int width;
+    int32_t expectedScanBufferSize;
+
     ScanLine* scanLines;    // matrix of switch points.
     Material* materials;    // draw properties for each object
     void *p_heap, *r_heap;  // internal heaps for depth sorting

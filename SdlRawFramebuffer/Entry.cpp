@@ -81,7 +81,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     FillTrangle(scanBuf,
         450, 300,
         450, 100,
-        670, 200,    // slight overshoot (tests clipping)
+        870, 200,    // slight overshoot (tests clipping)
         10,          // middle
         255, 0, 0);  // red
 
@@ -136,7 +136,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     
     // a whole bunch of small triangles
     // as a torture test. Also wraps top/bottom
-    /*for (int ti = 0; ti < 6000; ti++) {
+    for (int ti = 0; ti < 6000; ti++) {
         auto oti = (frame + ti * 18) % 820;
         auto yti = (ti >> 3);
         FillTrangle(scanBuf,
@@ -145,14 +145,13 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
             0 + oti, -10 + yti,
             ti + 3,
             ti % 255, ti % 255, 255);
-    }*/
+    }
 
-    /*auto scale = (frame * 3) % 500;
+    auto scale = (frame * 3) % 500;
     EllipseHole(scanBuf,
         400, 300, 10 + scale, 10 + scale,
         2,
         0, 0, 0);
-     */
 }
 
 

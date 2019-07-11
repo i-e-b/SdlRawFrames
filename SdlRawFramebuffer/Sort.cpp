@@ -1,22 +1,45 @@
 #include "Sort.h"
 #include <stdlib.h>
+#include <iostream>
+
+inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
+    // first sort by position
+    auto p1 = a[idx1].xpos;
+    auto p2 = a[idx2].xpos;
+    if (p1 < p2) return true;
+    if (p1 > p2) return false;
+
+    // they are equal. Now sort by object ID
+    auto id1 = a[idx1].id;
+    auto id2 = a[idx2].id;
+    if (id1 < id2) return true;
+    if (id1 > id2) return false;
+
+    // still equal. Put on before off
+    auto s1 = a[idx1].state;
+    auto s2 = a[idx2].state;
+    return (s1 > s2); // note this is reversed!
+}
 
 // Merge with minimal copies
-void iterativeMergeSort(SwitchPoint arr1[], int n) {
+void iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
+    if (n < 2) return;
+
+    auto arr1 = source;
+    auto arr2 = tmp;
+
     // a first pass swapping pairs (as this can be done in place)
     for (int i = 1; i < n - 3; i += 2) { // a run offset by one
-        if (arr1[i + 1].xpos < arr1[i].xpos) {
+        if (cmp(arr1, i + 1, i)) {
             auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
         }
     }
     for (int i = 0; i < n - 2; i += 2) { // 2^n aligned run (critical to the merge algorithm)
-        if (arr1[i+1].xpos < arr1[i].xpos) {
+        if (cmp(arr1, i + 1, i)) {
             auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
         }
     }
 
-    SwitchPoint *arr2 = (SwitchPoint*)calloc(n, sizeof(SwitchPoint)); // aux buffer
-    if (arr2 == NULL) return; // failure!
     auto A = arr2; // we will be flipping the array pointers around
     auto B = arr1;
 
@@ -35,7 +58,7 @@ void iterativeMergeSort(SwitchPoint arr1[], int n) {
 
             // copy the lowest candidate across from A to B
             while (l < right && r < end) {
-                if (A[l].xpos < A[r].xpos) { // compare the two bits to be merged
+                if (cmp(A, l, r)) { // compare the two bits to be merged
                     B[t++] = A[l++];
                 } else {
                     B[t++] = A[r++];
@@ -58,7 +81,4 @@ void iterativeMergeSort(SwitchPoint arr1[], int n) {
             arr1[i] = arr2[i];
         }
     }
-
-    // finally, clean up
-    free(arr2);
 }
