@@ -76,7 +76,7 @@ void GrowBuffer(ScanBuffer * buf) {
 }
 
 // Set a point with an exact position, clipped to bounds
-inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, int isOn) {
+inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, uint8_t isOn) {
     if (y < 0 || y > buf->height) return;
     
    // SwitchPoint sp;
@@ -92,14 +92,13 @@ inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, int isOn) {
     }*/
     if (line.count >= line.length) return; // buffer full. TODO: grow?
 
+    auto idx = line.count;
+    auto points = line.points;
 
-    SwitchPoint sp = line.points[line.count];
+    points[idx].xpos = (x < 0) ? 0 : x;
+    points[idx].id = objectId;
+    points[idx].state = isOn;
 
-    sp.xpos = (x < 0) ? 0 : x;
-    sp.id = objectId;
-    sp.state = isOn;
-
-    buf->scanLines[y].points[line.count] = sp; // write back changes
     buf->scanLines[y].count++; // increment pointer
 }
 
@@ -125,14 +124,12 @@ void SetLine(
     uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
     int h = buf->height;
     int w = buf->width;
-    bool isOn;
+    uint8_t isOn;
     
     if (y0 < y1) { // going down
-        //flags = OFF; // 'off' line
-        isOn = false;
+        isOn = OFF;
     } else { // going up
-        //flags = ON; // 'on' line
-        isOn = true;
+        isOn = ON;
         // swap coords so we can always calculate down (always 1 entry per y coord)
         int tmp;
         tmp = x0; x0 = x1; x1 = tmp;
@@ -457,7 +454,7 @@ void RenderScanLine(
     auto width = buf->width;
 
     // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
-    auto list = iterativeMergeSort(scanLine.points, tmpLine.points, count);
+    auto list = IterativeMergeSort(scanLine.points, tmpLine.points, count);
 
     
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap

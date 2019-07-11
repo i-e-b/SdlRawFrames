@@ -13,6 +13,11 @@ using namespace std;
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
+// If defined, renderer will attempt 60fps. Otherwise, drawing will be as fast as possible
+#define FRAME_LIMIT 1
+// If defined, renderer will run in a parallel thread. Otherwise, draw and render will run in sequence
+#define MULTITHREAD 1
+
 // Two-thread rendering stuff:
 SDL_Thread *thread = NULL; // Thread for multi-pass rendering
 SDL_mutex* gDataLock = NULL; // Data access semaphore, for the read buffer
@@ -33,7 +38,7 @@ int RenderWorker(void* data)
     }
     SDL_Delay(150); // delay wake up
     while (!quit) {
-        while (frameWait < 1) {
+        while (!quit && frameWait < 1) {
             SDL_Delay(1); // pause the thread until a new scan buffer is ready
         }
 
@@ -239,22 +244,24 @@ int main(int argc, char * argv[])
 #endif
 
         // Event loop and frame delay
+#ifdef FRAME_LIMIT
         SDL_PumpEvents(); // Keep Win32 happy
-        /*long ftime = (SDL_GetTicks() - fst);
+        long ftime = (SDL_GetTicks() - fst);
         if (ftime < 15) SDL_Delay(15 - ftime);
-        idleTime += 15 - ftime; // indication of how much slack we have*/
+        idleTime += 15 - ftime; // indication of how much slack we have
+#endif
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     quit = true;
+    frameWait = 100;
 
     long endTicks = SDL_GetTicks();
     float avgFPS = animationFrames / ((endTicks - startTicks) / 1000.f);
     float idleFraction = idleTime / (15.f*animationFrames);
     cout << "\r\nFPS ave = " << avgFPS << "\r\nIdle % = " << (100 * idleFraction);
 
-    SDL_Delay(1000); 
-    //while (!drawDone) { SDL_Delay(100); }// wait for the renderer to finish
+    while (!drawDone) { SDL_Delay(100); }// wait for the renderer to finish
 
     // Wait for user to close the window
     /*SDL_Event close_event;

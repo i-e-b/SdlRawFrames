@@ -31,7 +31,7 @@ inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
 }
 
 // Merge with minimal copies
-SwitchPoint* iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
+SwitchPoint* IterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
     if (n < 2) return source;
 
     auto arr1 = source;
