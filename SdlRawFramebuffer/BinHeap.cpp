@@ -45,7 +45,7 @@ void HeapMakeEmpty(PriorityQueue H) {
 
 // returns true if A > B
 // should give stable results by including unique ID when priority is equal
-bool Compare(ElementType A, ElementType B) {
+inline bool Compare(ElementType A, ElementType B) {
     if (A.depth > B.depth) return true;
     if (A.depth < B.depth) return false;
     return A.identifier > B.identifier; // depths are equal, use identifier
@@ -56,8 +56,7 @@ void HeapInsert(ElementType X, PriorityQueue H) {
 
     int i;
 
-    for (i = ++H->Size; Compare(H->Elements[i >> 1], X); i >>= 1)
-    {
+    for (i = ++H->Size; Compare(H->Elements[i >> 1], X); i >>= 1) {
         H->Elements[i] = H->Elements[i >> 1];
     }
 

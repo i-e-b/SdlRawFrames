@@ -13,11 +13,17 @@ using namespace std;
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
+// If defined, renderer will attempt 60fps. Otherwise, drawing will be as fast as possible
+#define FRAME_LIMIT 1
+// If defined, renderer will run in a parallel thread. Otherwise, draw and render will run in sequence
+#define MULTITHREAD 1
+
 // Two-thread rendering stuff:
 SDL_Thread *thread = NULL; // Thread for multi-pass rendering
 SDL_mutex* gDataLock = NULL; // Data access semaphore, for the read buffer
 ScanBuffer *BufferA, *BufferB; // pair of scanline buffers. One is written while the other is read
 volatile bool quit = false; // Quit flag
+volatile bool drawDone = false; // Quit complete flag
 volatile int writeBuffer = 0; // which buffer is being written (other will be read)
 volatile int frameWait = 0; // frames waiting
 BYTE* base = NULL; // graphics base
@@ -30,8 +36,9 @@ int RenderWorker(void* data)
     while (base == NULL) {
         SDL_Delay(5);
     }
+    SDL_Delay(150); // delay wake up
     while (!quit) {
-        while (frameWait < 1) {
+        while (!quit && frameWait < 1) {
             SDL_Delay(1); // pause the thread until a new scan buffer is ready
         }
 
@@ -39,12 +46,13 @@ int RenderWorker(void* data)
         auto scanBuf = (writeBuffer > 0) ? BufferA : BufferB; // must be opposite way to writing loop
         SDL_UnlockMutex(gDataLock);
 
-        RenderBuffer(scanBuf, base, rowBytes, frameByteSize);
+        RenderBuffer(scanBuf, base);
 
         SDL_LockMutex(gDataLock);
         frameWait = 0;
         SDL_UnlockMutex(gDataLock);
     }
+    drawDone = true;
     return 0;
 }
 
@@ -54,13 +62,14 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 
     SetBackground(scanBuf, 10000, 50, 80, 70);
 
-    auto rx = sin(frame / 128.0f) * 80;
-    auto ry = -cos(frame / 128.0f) * 80;
+    auto rx = (int)(sin(frame / 128.0f) * 80);
+    auto ry = (int)(-cos(frame / 128.0f) * 80);
     FillTrangle(scanBuf, // this triangle alternates between cw and ccw
         230 + rx, 130 + ry,
         230, 170,
         270, 150,
         4, 200, 255, 200);
+    
     FillCircle(scanBuf, 230 + rx, 130 + ry, 5, 3, 255, 255, 255);
 
     FillTrangle(scanBuf, // ccw
@@ -80,7 +89,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     FillTrangle(scanBuf,
         450, 300,
         450, 100,
-        670, 200,    // slight overshoot (tests clipping)
+        870, 200,    // slight overshoot (tests clipping)
         10,          // middle
         255, 0, 0);  // red
 
@@ -132,7 +141,6 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         500 + ry, 500 + rx,
         5, 2, // width
         255, 0, 255);
-
     
     // a whole bunch of small triangles
     // as a torture test. Also wraps top/bottom
@@ -152,7 +160,6 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         400, 300, 10 + scale, 10 + scale,
         2,
         0, 0, 0);
-        
 }
 
 
@@ -199,7 +206,9 @@ int main(int argc, char * argv[])
     BufferB = InitScanBuffer(w, h);
 
     // run the rendering thread
+#ifdef MULTITHREAD
     SDL_Thread* threadA = SDL_CreateThread(RenderWorker, "RenderThread", NULL);
+#endif
 
     // Used to calculate the frames per second
     long startTicks = SDL_GetTicks();
@@ -214,6 +223,8 @@ int main(int argc, char * argv[])
         SDL_UpdateWindowSurface(window);                        // update the surface -- need to do this every frame.
 
         // Wait for frame render to finish, then swap buffers and do next
+        
+#ifdef MULTITHREAD
         if (frameWait < 1) {
             // Swap buffers, we will render one to pixels while we're issuing draw commands to the other
             // If render can't keep up with framewait, we skip this frame and draw to the same buffer.
@@ -223,37 +234,49 @@ int main(int argc, char * argv[])
             frameWait = 1;                                          // signal to the other thread that the buffer has changed
             SDL_UnlockMutex(gDataLock);                             // unlock
         }
+#endif
 
         // Pick the write buffer and set switch points:
         DrawToScanBuffer(scanBuf, frame);
 
+#ifndef MULTITHREAD
+        RenderBuffer(scanBuf, base);
+#endif
+
         // Event loop and frame delay
+#ifdef FRAME_LIMIT
         SDL_PumpEvents(); // Keep Win32 happy
         long ftime = (SDL_GetTicks() - fst);
         if (ftime < 15) SDL_Delay(15 - ftime);
         idleTime += 15 - ftime; // indication of how much slack we have
+#endif
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     quit = true;
+    frameWait = 100;
 
     long endTicks = SDL_GetTicks();
     float avgFPS = animationFrames / ((endTicks - startTicks) / 1000.f);
     float idleFraction = idleTime / (15.f*animationFrames);
     cout << "\r\nFPS ave = " << avgFPS << "\r\nIdle % = " << (100 * idleFraction);
 
+    while (!drawDone) { SDL_Delay(100); }// wait for the renderer to finish
+
     // Wait for user to close the window
-    SDL_Event close_event;
+    /*SDL_Event close_event;
     while (SDL_WaitEvent(&close_event)) {
         if (close_event.type == SDL_QUIT) {
             break;
         }
-    }
+    }*/
 
     // Close up shop
     FreeScanBuffer(BufferA);
     FreeScanBuffer(BufferB);
+#ifdef MULTITHREAD
     SDL_WaitThread(threadA, NULL);
+#endif
     SDL_DestroyMutex(gDataLock);
     gDataLock = NULL;
     SDL_DestroyWindow(window);
