@@ -110,10 +110,10 @@ void ClearScanBuffer(ScanBuffer *buf);
 
 // Render a scan buffer to a pixel framebuffer
 // This can be done on a different processor core from other draw commands to spread the load
-// Do not draw to a buffer while it is rendering (switch buffers if you need to)
-void RenderBuffer( ScanBuffer *buf, // source scan buffer
-    BYTE* data, int rowBytes,       // target frame-buffer
-    int bufSize                     // size of target buffer
+// Do not draw to a scan buffer while it is rendering (switch buffers if you need to)
+void RenderBuffer(
+    ScanBuffer *buf, // source scan buffer
+    BYTE* data       // target frame-buffer (must match scanbuffer dimensions)
 );
 
 

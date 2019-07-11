@@ -39,7 +39,7 @@ int RenderWorker(void* data)
         auto scanBuf = (writeBuffer > 0) ? BufferA : BufferB; // must be opposite way to writing loop
         SDL_UnlockMutex(gDataLock);
 
-        RenderBuffer(scanBuf, base, rowBytes, frameByteSize);
+        RenderBuffer(scanBuf, base);
 
         SDL_LockMutex(gDataLock);
         frameWait = 0;

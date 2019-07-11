@@ -22,28 +22,16 @@ inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
 }
 
 // Merge with minimal copies
-void iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
-    if (n < 2) return;
+SwitchPoint* iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
+    if (n < 2) return source;
 
     auto arr1 = source;
     auto arr2 = tmp;
 
-    // a first pass swapping pairs (as this can be done in place)
-    for (int i = 1; i < n - 3; i += 2) { // a run offset by one
-        if (cmp(arr1, i + 1, i)) {
-            auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
-        }
-    }
-    for (int i = 0; i < n - 2; i += 2) { // 2^n aligned run (critical to the merge algorithm)
-        if (cmp(arr1, i + 1, i)) {
-            auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
-        }
-    }
-
     auto A = arr2; // we will be flipping the array pointers around
     auto B = arr1;
 
-    for (int stride = 2; stride < n; stride *= 2) { // doubling merge width
+    for (int stride = 1; stride < n; stride *= 2) { // doubling merge width
         
         // swap A and B pointers after each merge set
         { auto tmp = A; A = B; B = tmp; }
@@ -75,10 +63,12 @@ void iterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
         }
     }
 
-    // if we just wrote to the aux buffer, copy everything back.
-    if (B == arr2) {
+    return B; // return the actual result, whatever that is.
+
+    // if we just wrote to the tmp buffer, copy everything back.
+    /*if (B == arr2) {
         for (int i = 0; i < n; i++) {
             arr1[i] = arr2[i];
         }
-    }
+    }*/
 }

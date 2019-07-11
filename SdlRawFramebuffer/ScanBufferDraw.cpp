@@ -453,12 +453,11 @@ void RenderScanLine(
 
     int yoff = buf->width * lineIndex;
     auto materials = buf->materials;
-    auto list = scanLine.points;
     auto count = scanLine.count;
     auto width = buf->width;
 
     // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
-    iterativeMergeSort(list, tmpLine.points, count);
+    auto list = iterativeMergeSort(scanLine.points, tmpLine.points, count);
 
     
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
@@ -547,9 +546,8 @@ void RenderScanLine(
 // This can be done on a different processor core from other draw commands to spread the load
 // Do not draw to a scan buffer while it is rendering (switch buffers if you need to)
 void RenderBuffer(
-    ScanBuffer *buf,             // source scan buffer
-    BYTE* data, int rowBytes,    // target frame-buffer
-    int bufSize                  // size of target buffer
+    ScanBuffer *buf, // source scan buffer
+    BYTE* data       // target frame-buffer (must match scanbuffer dimensions)
 ) {
     if (buf == NULL || data == NULL) return;
 
