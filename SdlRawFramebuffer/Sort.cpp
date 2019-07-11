@@ -7,13 +7,13 @@ void iterativeMergeSort(SwitchPoint arr1[], int n) {
 
     // a first pass swapping pairs (as this can be done in place)
     for (int i = 1; i < n - 3; i += 2) { // a run offset by one (allows us to test for a pre-sorted array)
-        if (arr1[i + 1].pos < arr1[i].pos) {
+        if (arr1[i + 1].xpos < arr1[i].xpos) {
             auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
             anySwaps = true;
         }
     }
     for (int i = 0; i < n - 2; i += 2) { // 2^n aligned run (critical to the merge algorithm)
-        if (arr1[i+1].pos < arr1[i].pos) {
+        if (arr1[i+1].xpos < arr1[i].xpos) {
             auto tmp = arr1[i]; arr1[i] = arr1[i + 1]; arr1[i + 1] = tmp;
             anySwaps = true;
         }
@@ -39,7 +39,7 @@ void iterativeMergeSort(SwitchPoint arr1[], int n) {
 
             // copy the lowest candidate across from A to B
             while (l < right && r < end) {
-                if (A[l].pos < A[r].pos) { // compare the two bits to be merged
+                if (A[l].xpos < A[r].xpos) { // compare the two bits to be merged
                     B[t++] = A[l++];
                 } else {
                     B[t++] = A[r++];

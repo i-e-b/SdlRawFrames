@@ -11,24 +11,34 @@
 
 // entry for each 'pixel' in a scan buffer
 // 'drawing' involves writing a list of these, sorting by x-position, then filling the scanline
+// Notes: 1080p resolution is 1920x1080 = 2'073'600 pixels. 2^22 is 4'194'304; 2^21 -1 = 2'097'151
+// Using per-row buffers, we only need 2048, or about 11 bits
 typedef struct SwitchPoint {
-    uint16_t id;                // itemCount when this point was drawn, the object ID (limit of 65k objects per frame)
-    int16_t  depth;             // z-position in final image
-    uint32_t pos;               // position of switch-point, as (y*width)+x;
-    uint32_t material;          // RGB (24 bit of color). Could also be used to look up a texture or other style later.
-    uint8_t  meta;              // metadata/flags. TODO: better alignment, merge into material?
-                                // 0x01: set = 'on' point, unset = 'off' point
+    uint32_t xpos:11;      // position of switch-point, as (y*width)+x; (21 bits left)
+    uint32_t id:16;        // the object ID (used for material lookup, 65k limit) (5 bits left)
+    uint32_t state:1;      // 1 = 'on' point, 0 = 'off' point.
+    uint32_t reserved:4;   // not yet used.
 } SwitchPoint;
+
+typedef struct Material {
+    uint32_t color;         // RGB (24 bit of color).
+    int16_t  depth;         // z-position in final image
+} Material;
+
+typedef struct ScanLine {
+    uint32_t count;              // number of items in the array
+    uint32_t length;             // memory length of the array
+
+    SwitchPoint* points;    // When drawing to the buffer, we can just append. Before rendering, this must be sorted by xpos
+} ScanLine;
 
 // buffer of switch points.
 typedef struct ScanBuffer {
-    uint16_t itemCount;      // used to give each switch-point a unique ID. This is critical for the depth-sorting process
+    uint16_t itemCount;     // used to give each switch-point a unique ID. This is critical for the depth-sorting process
     int height;
     int width;
-
-    int count;              // number of items in the array
-    int length;             // memory length of the array
-    SwitchPoint *list;      // array of switch points. When drawing to the buffer, we can just append. Before rendering, this must be sorted by abs(pos)
+    ScanLine* scanLines;    // matrix of switch points.
+    Material* materials;    // draw properties for each object
     void *p_heap, *r_heap;  // internal heaps for depth sorting
 } ScanBuffer;
 

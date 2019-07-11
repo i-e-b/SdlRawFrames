@@ -9,37 +9,45 @@ using namespace std;
 #define ON 0x01
 #define OFF 0x00
 
+#define OBJECT_MAX 65535
+
 ScanBuffer * InitScanBuffer(int width, int height)
 {
     auto buf = (ScanBuffer*)calloc(1, sizeof(ScanBuffer));
     if (buf == NULL) return NULL;
 
-    auto sizeEstimate = width * height * 2;
+    auto sizeEstimate = width * 2;
 
     // Idea: Have a single list and sort by overall position rather than x (would need a background reset at each scan start?)
     //       Could also do a 'region' like difference-from-last-scanline?
 
-    buf->list = (SwitchPoint*)calloc(sizeEstimate, sizeof(SwitchPoint));
-    if (buf->list == NULL) {
-        free(buf); return NULL;
+    buf->materials = (Material*)calloc(OBJECT_MAX + 1, sizeof(Material));
+    if (buf->materials == NULL) { FreeScanBuffer(buf); return NULL; }
+
+    buf->scanLines = (ScanLine*)calloc(height, sizeof(ScanLine));
+    if (buf->scanLines == NULL) { FreeScanBuffer(buf); return NULL; }
+
+    for (int i = 0; i < height; i++) {
+        auto scanBuf = (SwitchPoint*)calloc(sizeEstimate, sizeof(SwitchPoint));
+        if (scanBuf == NULL) { FreeScanBuffer(buf); return NULL; }
+        buf->scanLines[i].points = scanBuf;
+        buf->scanLines[i].count = 0;
+        buf->scanLines[i].length = sizeEstimate;
     }
 
-    buf->p_heap = HeapInit(32000);
+    buf->p_heap = HeapInit(OBJECT_MAX);
     if (buf->p_heap == NULL) {
-        free(buf->list);
+        FreeScanBuffer(buf);
         return NULL;
     }
 
-    buf->r_heap = HeapInit(32000);
+    buf->r_heap = HeapInit(OBJECT_MAX);
     if (buf->r_heap == NULL) {
-        HeapDestroy((PriorityQueue)buf->p_heap);
-        free(buf->list);
+        FreeScanBuffer(buf);
         return NULL;
     }
 
     buf->itemCount = 0;
-    buf->count = 0;
-    buf->length = sizeEstimate;
     buf->height = height;
     buf->width = width;
 
@@ -49,7 +57,13 @@ ScanBuffer * InitScanBuffer(int width, int height)
 void FreeScanBuffer(ScanBuffer * buf)
 {
     if (buf == NULL) return;
-    if (buf->list != NULL) free(buf->list);
+    if (buf->scanLines != NULL) {
+        for (int i = 0; i < buf->height; i++) {
+            if (buf->scanLines[i].points != NULL) free(buf->scanLines[i].points);
+        }
+        free(buf->scanLines);
+    }
+    if (buf->materials != NULL) free(buf->materials);
     if (buf->p_heap != NULL) HeapDestroy((PriorityQueue)buf->p_heap);
     if (buf->r_heap != NULL) HeapDestroy((PriorityQueue)buf->r_heap);
     free(buf);
@@ -60,33 +74,28 @@ void GrowBuffer(ScanBuffer * buf) {
     cout << "\r\nShould have extended the buffer. Will fail!";
 }
 
-// Set a point with an exact position. Do your own clipping
-inline void SetSP(ScanBuffer * buf, uint32_t pos, int z, uint32_t color, uint8_t meta) {
-    SwitchPoint sp;
-    sp.id = buf->itemCount;
-    sp.pos = pos;
-    sp.depth = z;
-    sp.material = color;
-    sp.meta = meta;
+// Set a point with an exact position, clipped to bounds
+inline void SetSP(ScanBuffer * buf, uint32_t x, uint32_t y, uint16_t objectId, bool isOn) {
+    if (y < 0 || y > buf->height) return;
+    
+   // SwitchPoint sp;
+    ScanLine line = buf->scanLines[y];
+    if (line.count >= line.length) return; // buffer full. TODO: grow?
 
-    buf->list[buf->count] = sp;
-    buf->count++;
+    SwitchPoint sp = line.points[line.count];
+
+    sp.xpos = x;
+    sp.id = objectId;
+    sp.state = isOn ? 1 : 0;
+
+    buf->scanLines[y].points[line.count] = sp; // write back changes
+    buf->scanLines[y].count++; // increment pointer
 }
 
-// set a point with L/R clipping
-inline void SetSP(ScanBuffer * buf, int x, int y, int z, uint32_t color, uint8_t meta) {
-    int nx = (x < 0) ? 0 : x;
-    if (nx >= buf->width) nx = buf->width - 1;
-
-    SwitchPoint sp;
-    sp.id = buf->itemCount;
-    sp.pos = (y * buf->width) + nx;
-    sp.depth = z;
-    sp.material = color;
-    sp.meta = meta;
-
-    buf->list[buf->count] = sp;
-    buf->count++;
+inline void SetMaterial(ScanBuffer* buf, uint16_t objectId, int depth, uint32_t color) {
+    if (objectId > OBJECT_MAX) return;
+    buf->materials[objectId].color = color;
+    buf->materials[objectId].depth = depth;
 }
 
 // INTERNAL: Write scan switch points into buffer for a single line.
@@ -105,12 +114,14 @@ void SetLine(
     uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
     int h = buf->height;
     int w = buf->width;
-    uint8_t flags;
+    bool isOn;
     
     if (y0 < y1) { // going down
-        flags = OFF; // 'off' line
+        //flags = OFF; // 'off' line
+        isOn = false;
     } else { // going up
-        flags = ON; // 'on' line
+        //flags = ON; // 'on' line
+        isOn = true;
         // swap coords so we can always calculate down (always 1 entry per y coord)
         int tmp;
         tmp = x0; x0 = x1; x1 = tmp;
@@ -122,19 +133,14 @@ void SetLine(
     int bottom = (y1 > h) ? h : y1;
     float grad = (float)(x0 - x1) / (float)(y0 - y1);
 
-    int scanlines = bottom - top;
-    int remains = buf->length - buf->count;
-    if (scanlines > remains) GrowBuffer(buf);
+    auto objectId = buf->itemCount;
+    SetMaterial(buf, objectId, z, color);
 
-    for (auto i = 0; i < scanlines; i++) // skip the last pixel to stop double-counting
+    for (int y = top; y < bottom; y++) // skip the last pixel to stop double-counting
     {
         // add a point.
-        int ox = (int)(grad * (i + yoff)) + x0;
-        if (ox < 0) ox = 0; // saturate edges for clipping (without this shapes wrap horizontally)
-        if (ox > w) ox = w;
-        uint32_t addr = ((i + top) * w) + ox;
-
-        SetSP(buf, addr, z, color, flags);
+        int x = (int)(grad * (y-top) + x0);
+        SetSP(buf, x, y, objectId, isOn);
     }
 
 }
@@ -148,7 +154,6 @@ void FillRect(ScanBuffer *buf,
 {
     if (z < 0) return; // behind camera
     if (left >= right || top >= bottom) return; //empty
-    buf->itemCount++;
     SetLine(buf,
         left, bottom,
         left, top,
@@ -157,6 +162,8 @@ void FillRect(ScanBuffer *buf,
         right, top,
         right, bottom,
         z, r, g, b);
+
+    buf->itemCount++;
 }
 
 void FillCircle(ScanBuffer *buf,
@@ -184,17 +191,20 @@ void GeneralEllipse(ScanBuffer *buf,
     int b2 = height * height;
     int fa2 = 4 * a2, fb2 = 4 * b2;
     int x, y, ty, sigma;
+    
+    auto objectId = buf->itemCount;
+    SetMaterial(buf, objectId, z, color);
 
     // Top and bottom (need to ensure we don't double the scanlines)
     for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
         if (sigma >= 0) {
             sigma += fa2 * (1 - y);
             // only draw scan points when we change y
-            SetSP(buf, xc - x, yc + y, z, color, left);
-            SetSP(buf, xc + x, yc + y, z, color, right);
+            SetSP(buf, xc - x, yc + y, objectId, left);
+            SetSP(buf, xc + x, yc + y, objectId, right);
 
-            SetSP(buf, xc - x, yc - y, z, color, left);
-            SetSP(buf, xc + x, yc - y, z, color, right);
+            SetSP(buf, xc - x, yc - y, objectId, left);
+            SetSP(buf, xc + x, yc - y, objectId, right);
             y--;
         }
         sigma += b2 * ((4 * x) + 6);
@@ -202,16 +212,16 @@ void GeneralEllipse(ScanBuffer *buf,
     ty = y; // prevent overwrite
 
     // Left and right
-    SetSP(buf, xc - width, yc, z, color, left);
-    SetSP(buf, xc + width, yc, z, color, right);
+    SetSP(buf, xc - width, yc, objectId, left);
+    SetSP(buf, xc + width, yc, objectId, right);
     for (x = width, y = 1, sigma = 2 * a2 + b2 * (1 - 2 * width); a2*y < b2 * x; y++) {
         if (y > ty) break; // started to overlap 'top-and-bottom'
 
-        SetSP(buf, xc - x, yc + y, z, color, left);
-        SetSP(buf, xc + x, yc + y, z, color, right);
+        SetSP(buf, xc - x, yc + y, objectId, left);
+        SetSP(buf, xc + x, yc + y, objectId, right);
 
-        SetSP(buf, xc - x, yc - y, z, color, left);
-        SetSP(buf, xc + x, yc - y, z, color, right);
+        SetSP(buf, xc - x, yc - y, objectId, left);
+        SetSP(buf, xc + x, yc - y, objectId, right);
 
         if (sigma >= 0) {
             sigma += fb2 * (1 - x);
@@ -228,12 +238,13 @@ void FillEllipse(ScanBuffer *buf,
     int r, int g, int b)
 {
     if (z < 0) return; // behind camera
-    buf->itemCount++;
 
     GeneralEllipse(buf,
         xc, yc, width, height,
         z, true,
         r, g, b);
+
+    buf->itemCount++;
 }
 
 void EllipseHole(ScanBuffer *buf,
@@ -242,17 +253,17 @@ void EllipseHole(ScanBuffer *buf,
     int r, int g, int b) {
 
     if (z < 0) return; // behind camera
-    buf->itemCount++;
 
     // set background
-    uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
-    SetSP(buf, 0, z, color, ON);
+    FillRect(buf, 0, 0, width, height, z, r, g, b);
 
     // Same as ellipse, but with on and off flipped to make hole
     GeneralEllipse(buf,
         xc, yc, width, height,
         z, false,
         r, g, b);
+
+    buf->itemCount++;
 }
 
 // Fill a quad given 3 points
@@ -265,7 +276,6 @@ void FillTriQuad(ScanBuffer *buf,
     // Basically the same as triangle, but we also draw a mirror image across the xy1/xy2 plane
     if (buf == NULL) return;
     if (z < 0) return; // behind camera
-    buf->itemCount++;
 
     if (x2 == x1 && x0 == x1 && y0 == y1 && y1 == y2) return; // empty
 
@@ -284,6 +294,8 @@ void FillTriQuad(ScanBuffer *buf,
     SetLine(buf, x1, y1, x2 + dx1, y2 + dy1, z, r, g, b);
     SetLine(buf, x2 + dx1, y2 + dy1, x2, y2, z, r, g, b);
     SetLine(buf, x2, y2, x0, y0, z, r, g, b);
+
+    buf->itemCount++;
 }
 
 void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, int r, int g, int b)
@@ -319,7 +331,6 @@ void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, in
 void OutlineEllipse(ScanBuffer * buf, int xc, int yc, int width, int height, int z, int w, int r, int g, int b)
 {
     if (z < 0) return; // behind camera
-    buf->itemCount++;
 
     int w1 = w / 2;
     int w2 = w - w1;
@@ -331,6 +342,8 @@ void OutlineEllipse(ScanBuffer * buf, int xc, int yc, int width, int height, int
     GeneralEllipse(buf,
         xc, yc, width - w1, height - w1,
         z, false, r, g, b);
+
+    buf->itemCount++;
 }
 
 // Fill a triagle with a solid colour
@@ -346,7 +359,6 @@ void FillTrangle(
 {
     if (buf == NULL) return;
     if (z < 0) return; // behind camera
-    buf->itemCount++;
 
     if (x0 == x1 && x1 == x2) return; // empty
     if (y0 == y1 && y1 == y2) return; // empty
@@ -367,23 +379,22 @@ void FillTrangle(
         SetLine(buf, x1, y1, x0, y0, z, r, g, b);
     }
 
+    buf->itemCount++;
 }
 
-// Set a single 'on' point at the given level. Nice and simple
+// Set a single 'on' point at the given level on each scan line
 void SetBackground(
     ScanBuffer *buf,
     int z, // depth of the background. Anything behind this will be invisible
     int r, int g, int b) {
+    if (z < 0) return; // behind camera
 
-    SwitchPoint sp;
-    sp.id = buf->itemCount++;
-    sp.pos = 0; // top-left of image
-    sp.depth = z;
-    sp.material = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
-    sp.meta = 0x01; // 'on'
+    SetLine(buf,
+        0, buf->height,
+        0, 0,
+        z, r, g, b);
 
-    buf->list[buf->count] = sp;
-    buf->count++;
+    buf->itemCount++;
 }
 
 // Reset all drawing operations in the buffer, ready for next frame
@@ -392,7 +403,10 @@ void ClearScanBuffer(ScanBuffer * buf)
 {
     if (buf == NULL) return;
     buf->itemCount = 0; // reset object ids
-    buf->count = 0; // set occupancy to zero. All the old scanline values remain, but we ignore them
+    for (int i = 0; i < buf->height; i++)
+    {
+        buf->scanLines[i].count = 0;
+    }
 }
 
 // blend two colors, by a proportion (0..255)
@@ -410,21 +424,21 @@ uint32_t Blend(int prop1, uint32_t color1, uint32_t color2) {
     return ((r & 0xff00) << 8) + ((g & 0xff00)) + ((b >> 8) & 0xff);
 }
 
-// Render a scan buffer to a pixel framebuffer
-// This can be done on a different processor core from other draw commands to spread the load
-// Do not draw to a buffer while it is rendering (switch buffers if you need to)
-void RenderBuffer(
+void RenderScanLine(
     ScanBuffer *buf,             // source scan buffer
+    int lineIndex,               // index of the line we're drawing
     BYTE* data, int rowBytes,    // target frame-buffer
     int bufSize                  // size of target buffer
 ) {
-    if (buf == NULL || data == NULL) return;
+    auto scanLine = buf->scanLines[lineIndex];
+    int yoff = buf->width * lineIndex;
 
     // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
-    iterativeMergeSort(buf->list, buf->count);
+    iterativeMergeSort(scanLine.points, scanLine.count);
 
-    auto list = buf->list;
-    auto count = buf->count;
+    auto materials = buf->materials;
+    auto list = scanLine.points;
+    auto count = scanLine.count;
     
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
     auto r_heap = (PriorityQueue)buf->r_heap;   // removal heap
@@ -432,7 +446,7 @@ void RenderBuffer(
     HeapMakeEmpty(p_heap);
     HeapMakeEmpty(r_heap);
 
-    uint32_t end = bufSize / 4; // end of data in 32bit words
+    uint32_t end = rowBytes / 4; // end of data in 32bit words
 
     bool on = false;
     uint32_t p = 0; // current pixel
@@ -441,19 +455,20 @@ void RenderBuffer(
     for (int i = 0; i < count; i++)
     {
         SwitchPoint sw = list[i];
+        Material m = materials[sw.id];
 
-        if (sw.pos > p) { // render up to this switch point
+        if (sw.xpos > p) { // render up to this switch point
             if (on) {
-                for (; p < sw.pos; p++)
+                for (; p < sw.xpos; p++)
                 {
                     if (p >= end) return; // end of pixel buffer
-                    ((uint32_t*)data)[p] = color;
+                    ((uint32_t*)data)[p + yoff] = color;
                 }
-            } else p = sw.pos;
+            } else p = sw.xpos;
         }
 
-        auto heapElem = ElementType{ /*depth:*/ sw.depth, /*unique id:*/ sw.id, /*lookup index:*/ i };
-        if (sw.meta & 0x01) { // 'on' point, add to presentation heap
+        auto heapElem = ElementType{ /*depth:*/ m.depth, /*unique id:*/(int)sw.id, /*lookup index:*/ i };
+        if (sw.state == ON) { // 'on' point, add to presentation heap
             HeapInsert(heapElem, p_heap);
         } else { // 'off' point, add to removal heap
             HeapInsert(heapElem, r_heap);
@@ -461,7 +476,7 @@ void RenderBuffer(
 
         // while top of p_heap and r_heap match, remove both.
         auto nextRemove = ElementType{ 0,-1,0 };
-        auto top = ElementType{ 0,-1,0 };
+        auto top = ElementType{ 0,0,0 };
         while (HeapTryFindMin(p_heap, &top) && HeapTryFindMin(r_heap, &nextRemove)
             && top.identifier == nextRemove.identifier) {
             HeapDeleteMin(r_heap);
@@ -471,7 +486,7 @@ void RenderBuffer(
         // set color for next run based on top of p_heap
         on = ! HeapIsEmpty(p_heap);
         if (on) {
-            color = list[top.lookup].material;
+            color = materials[top.identifier].color;
         }
 
 
@@ -481,7 +496,7 @@ void RenderBuffer(
         if (HeapTryFindNext(p_heap, &nextObj)) {
             // if it's on the remove heap, we don't want to blend. It should be top if so.
             if (HeapPeekMin(r_heap).identifier != nextObj.identifier) {
-                color_under = list[nextObj.lookup].material;
+                color_under = materials[nextObj.lookup].color;
                 color = Blend(127, color, color_under);
             } else { // blend with black to stop things looking too weird
                 color = Blend(127, color, 0);
@@ -491,16 +506,33 @@ void RenderBuffer(
 #endif
 #if 0
         // DEBUG: show switch point in black
-        int pixoff = ((sw.pos - 1) * 4);
+        int pixoff = ((yoff + sw.xpos - 1) * 4);
         if (pixoff > 0) { data[pixoff + 0] = data[pixoff + 1] = data[pixoff + 2] = 0; }
         // END
 #endif
     } // out of switch points
 
+    
     if (on) { // fill to end of data
         for (; p < end; p++) {
-            ((uint32_t*)data)[p] = color;
+            ((uint32_t*)data)[p + yoff] = color;
         }
+    }
+    
+}
+
+// Render a scan buffer to a pixel framebuffer
+// This can be done on a different processor core from other draw commands to spread the load
+// Do not draw to a scan buffer while it is rendering (switch buffers if you need to)
+void RenderBuffer(
+    ScanBuffer *buf,             // source scan buffer
+    BYTE* data, int rowBytes,    // target frame-buffer
+    int bufSize                  // size of target buffer
+) {
+    if (buf == NULL || data == NULL) return;
+
+    for (int i = 0; i < buf->height; i++) {
+        RenderScanLine(buf, i, data, rowBytes, bufSize);
     }
 }
 
