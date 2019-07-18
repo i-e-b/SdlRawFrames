@@ -15,9 +15,9 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
 // If defined, renderer will attempt 60fps. Otherwise, drawing will be as fast as possible
-//#define FRAME_LIMIT 1
+#define FRAME_LIMIT 1
 // If defined, renderer will run in a parallel thread. Otherwise, draw and render will run in sequence
-//#define MULTITHREAD 1
+#define MULTITHREAD 1
 
 // Two-thread rendering stuff:
 SDL_Thread *thread = NULL; // Thread for multi-pass rendering
@@ -62,7 +62,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     ClearScanBuffer(scanBuf); // wipe out buffer
 
     SetBackground(scanBuf, 10000, 50, 80, 70);
-/*
+//*
     auto rx = (int)(sin(frame / 128.0f) * 80);
     auto ry = (int)(-cos(frame / 128.0f) * 80);
     FillTrangle(scanBuf, // this triangle alternates between cw and ccw
@@ -143,6 +143,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         5, 2, // width
         255, 0, 255);
     
+ /*
     // a whole bunch of small triangles
     // as a torture test. Also wraps top/bottom
     for (int ti = 0; ti < 6000; ti++) {
@@ -166,17 +167,19 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     // test font
     int px = 2;
     auto demo1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    auto demo2 = "HELLO WORLD! SCANLINE TEST";
+    auto demo2 = "Hello world! Scanline Test";
     for (int i = 0; i < 26; i++) {
         AddGlyph(scanBuf, demo1[i], (2 + i) * 8, 20, 1, 0xffffff);
         AddGlyph(scanBuf, demo2[i], (2 + i) * 8, 28, 1, 0xffffff);
 
         // stress-test
+        /*
         for (int j = 0; j < 50; j++) {
             AddGlyph(scanBuf, demo1[i], ( 2 + i) * 8, (j + 5) * 8, 3, 0xffffff);
             AddGlyph(scanBuf, demo1[i], (29 + i) * 8, (j + 5) * 8, 4, 0xffffff);
             AddGlyph(scanBuf, demo1[i], (56 + i) * 8, (j + 5) * 8, 5, 0xffffff);
         }
+        */
     }
 }
 

@@ -1,5 +1,12 @@
 #include "ScanBufferFont.h"
 
+// TODO:
+// Change the structures below. Every character has 8 rows. There aren't many unique rows
+// so have a big data blob to handle that.
+
+
+
+
 // Row-based components of the font
 #define fEND 0xffff // end of glyph
 // ON   0123456
@@ -241,6 +248,36 @@ uint16_t ch_Z[] = { xxxxxxx(06)
                     xx_____(01)
                     xxxxxxx(00) fEND };
 
+uint16_t Bang[] = { ___xx__(06)
+                    __xxxx_(05)
+                    __xxxx_(04)
+                    ___xx__(03)
+                    _______(02)
+                    ___xx__(01)
+                    ___xx__(00) fEND };
+
+// Invalid char, control char, or not yet mapped
+uint16_t chIV[] = { xxxxxxx(06)
+                    _______(05)
+                    xxxxxxx(04)
+                    _______(03)
+                    xxxxxxx(02)
+                    _______(01)
+                    xxxxxxx(00) fEND };
+
+uint16_t* charMap[] { // ASCII, starting from 33 (0x21) '!'
+ Bang, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, // PUNCT & NUM
+ chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV,
+ chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV,
+ chIV, chIV, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, ch_G, ch_H, // UPPER CASE
+ ch_I, ch_J, ch_K, ch_L, ch_M, ch_N, ch_O, ch_P, ch_Q, ch_R,
+ ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z, chIV, chIV,
+ chIV, chIV, chIV, chIV, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, // LOWER CASE
+ ch_G, ch_H, ch_I, ch_J, ch_K, ch_L, ch_M, ch_N, ch_O, ch_P,
+ ch_Q, ch_R, ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z,
+ chIV, chIV, chIV, chIV, chIV
+};
+
 // Set a point with an exact position, clipped to bounds
 // SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, uint8_t isOn);
 
@@ -251,41 +288,10 @@ uint16_t ch_Z[] = { xxxxxxx(06)
 
 void AddGlyph(ScanBuffer *buf, char c, int x, int y, int z, uint32_t color) {
     if (buf == NULL) return;
-    if (c < 32 || c > 126) return;
+    if (c < 33 || c > 126) return;
 
     // pick a char block. For now, just use 'A'
-    uint16_t* points;
-    switch (c) {
-    case 'A': points = ch_A; break;
-    case 'B': points = ch_B; break;
-    case 'C': points = ch_C; break;
-    case 'D': points = ch_D; break;
-    case 'E': points = ch_E; break;
-    case 'F': points = ch_F; break;
-    case 'G': points = ch_G; break;
-    case 'H': points = ch_H; break;
-    case 'I': points = ch_I; break;
-    case 'J': points = ch_J; break;
-    case 'K': points = ch_K; break;
-    case 'L': points = ch_L; break;
-    case 'M': points = ch_M; break;
-    case 'N': points = ch_N; break;
-    case 'O': points = ch_O; break;
-    case 'P': points = ch_P; break;
-    case 'Q': points = ch_Q; break;
-    case 'R': points = ch_R; break;
-    case 'S': points = ch_S; break;
-    case 'T': points = ch_T; break;
-    case 'U': points = ch_U; break;
-    case 'V': points = ch_V; break;
-    case 'W': points = ch_W; break;
-    case 'X': points = ch_X; break;
-    case 'Y': points = ch_Y; break;
-    case 'Z': points = ch_Z; break;
-
-    default: return; // don't bother drawing
-    }
-
+    uint16_t* points = charMap[c - 33];
 
     // set objectId, color, and depth
     int objId = buf->itemCount;
