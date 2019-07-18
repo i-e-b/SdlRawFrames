@@ -1,6 +1,7 @@
 #include "ImmediateDraw.h"
 #include "ScanBufferDraw.h"
-#include "BinHeap.h"
+#include "ScanBufferFont.h"
+
 
 #include <SDL.h>
 #include <SDL_mutex.h>
@@ -61,7 +62,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     ClearScanBuffer(scanBuf); // wipe out buffer
 
     SetBackground(scanBuf, 10000, 50, 80, 70);
-
+/*
     auto rx = (int)(sin(frame / 128.0f) * 80);
     auto ry = (int)(-cos(frame / 128.0f) * 80);
     FillTrangle(scanBuf, // this triangle alternates between cw and ccw
@@ -160,6 +161,12 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         400, 300, 10 + scale, 10 + scale,
         2,
         0, 0, 0);
+//*/
+
+    // test font
+    AddGlyph(scanBuf, 'A', 20, 20, 1, 0xffffff);
+    AddGlyph(scanBuf, 'B', 30, 20, 1, 0xffffff);
+    AddGlyph(scanBuf, 'C', 40, 20, 1, 0xffffff);
 }
 
 

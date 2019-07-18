@@ -3,7 +3,7 @@
 #include <iostream>
 
 // maximal/exhaustive sort
-inline bool cmp1(SwitchPoint* a, int idx1, int idx2) {
+inline bool cmp_other(SwitchPoint* a, int idx1, int idx2) {
     // first sort by position
     auto p1 = a[idx1].xpos;
     auto p2 = a[idx2].xpos;
@@ -24,7 +24,7 @@ inline bool cmp1(SwitchPoint* a, int idx1, int idx2) {
 
 // minimal sort
 inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
-    // first sort by position
+    // sort by position, with `on` to the left of `off`
     auto p1 = (a[idx1].xpos << 1) + a[idx1].state;
     auto p2 = (a[idx2].xpos << 1) + a[idx2].state;
     return (p1 < p2);

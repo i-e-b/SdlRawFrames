@@ -1,8 +1,9 @@
 #include "ScanBufferDraw.h"
+
 #include "Sort.h"
 #include "BinHeap.h"
-#include <stdlib.h>
 
+#include <stdlib.h>
 #include <iostream>
 using namespace std;
 
@@ -70,12 +71,8 @@ void FreeScanBuffer(ScanBuffer * buf)
     free(buf);
 }
 
-void GrowBuffer(ScanBuffer * buf) {
-    // TODO: extend the buffer size!
-    cout << "\r\nShould have extended the buffer. Will fail!";
-}
-
 // Set a point with an exact position, clipped to bounds
+// gradient is 0..15; 15 = vertical; 0 = near horizontal.
 inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, uint8_t isOn) {
     if (y < 0 || y > buf->height) return;
     
@@ -210,6 +207,7 @@ void GeneralEllipse(ScanBuffer *buf,
     
     auto objectId = buf->itemCount;
     SetMaterial(buf, objectId, z, color);
+    int grad = 15; // TODO: calculate (could be based on distance from centre line)
 
     // Top and bottom (need to ensure we don't double the scanlines)
     for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
@@ -321,8 +319,8 @@ void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, in
     // TODO: special case for w < 2
 
     // Use triquad and the gradient's normal to draw
-    float ndy = x1 - x0;
-    float ndx = -(y1 - y0);
+    float ndy = (float)(   x1 - x0  );
+    float ndx = (float)( -(y1 - y0) );
 
     // normalise
     float mag = sqrt((ndy*ndy) + (ndx*ndx));
@@ -425,8 +423,12 @@ void ClearScanBuffer(ScanBuffer * buf)
     }
 }
 
-// blend two colors, by a proportion (0..255)
-uint32_t Blend(int prop1, uint32_t color1, uint32_t color2) {
+// blend two colors, by a proportion [0..255]
+// 255 is 100% color1; 0 is 100% color2.
+inline uint32_t Blend(int prop1, uint32_t color1, uint32_t color2) {
+    if (prop1 >= 255) return color1;
+    if (prop1 <= 0) return color2;
+
     int prop2 = 255 - prop1;
     int r = prop1 * ((color1 & 0x00FF0000) >> 16);
     int g = prop1 * ((color1 & 0x0000FF00) >> 8);
@@ -438,6 +440,35 @@ uint32_t Blend(int prop1, uint32_t color1, uint32_t color2) {
 
     // everything needs shifting 8 bits, we've integrated it into the color merge
     return ((r & 0xff00) << 8) + ((g & 0xff00)) + ((b >> 8) & 0xff);
+}
+
+// reduce display heap to the minimum by merging with remove heap
+inline void CleanUpHeaps(PriorityQueue p_heap, PriorityQueue r_heap) {
+    // clear first rank (ended objects that are on top)
+    // while top of p_heap and r_heap match, remove both.
+    auto nextRemove = ElementType{ 0,-1,0 };
+    auto top = ElementType{ 0,-1,0 };
+    while (HeapTryFindMin(p_heap, &top) && HeapTryFindMin(r_heap, &nextRemove)
+        && top.identifier == nextRemove.identifier) {
+        HeapDeleteMin(r_heap);
+        HeapDeleteMin(p_heap);
+    }
+
+    // clear up second rank (ended objects that are behind the top)
+    auto nextObj = ElementType{ 0,-1,0 };
+
+    // clean up the heaps more
+    if (HeapTryFindNext(p_heap, &nextObj)) {
+        if (HeapPeekMin(r_heap).identifier == nextObj.identifier) {
+            auto current = HeapDeleteMin(p_heap); // remove the current top (we'll put it back after)
+            while (HeapTryFindMin(p_heap, &top) && HeapTryFindMin(r_heap, &nextRemove)
+                && top.identifier == nextRemove.identifier) {
+                HeapDeleteMin(r_heap);
+                HeapDeleteMin(p_heap);
+            }
+            HeapInsert(current, p_heap);
+        }
+    }
 }
 
 void RenderScanLine(
@@ -468,18 +499,27 @@ void RenderScanLine(
     bool on = false;
     uint32_t p = 0; // current pixel
     uint32_t color = 0; // color of current object
-    uint32_t color_under; // color of next object down
+    uint32_t color_under = 0; // antialiasing color
+    SwitchPoint current = {}; // top-most object's most recent "on" switch
     for (int i = 0; i < count; i++)
     {
         SwitchPoint sw = list[i];
-        if (sw.xpos > width) break; // ran off the end
+        if (sw.xpos > end) break; // ran off the end
 
         Material m = materials[sw.id];
 
         if (sw.xpos > p) { // render up to this switch point
             if (on) {
                 auto max = (sw.xpos > end) ? end : sw.xpos;
-                for (; p < max; p++) { ((uint32_t*)data)[p + yoff] = color; } // draw pixels up to the point
+                for (; p < max; p++) {
+                    // This AA strategy will never work. Needs re-thinking
+                    /*if (current.fade < 15) current.fade++;
+                    auto c = Blend(15 + (current.fade << 4), color, color_under);
+                    ((uint32_t*)data)[p + yoff] = c;*/
+
+
+                    ((uint32_t*)data)[p + yoff] = color;
+                } // draw pixels up to the point
             } else p = sw.xpos; // skip direct to the point
         }
 
@@ -490,38 +530,28 @@ void RenderScanLine(
             HeapInsert(heapElem, r_heap);
         }
 
-        // while top of p_heap and r_heap match, remove both.
-        auto nextRemove = ElementType{ 0,-1,0 };
-        auto top = ElementType{ 0,-1,0 };
-        while (HeapTryFindMin(p_heap, &top) && HeapTryFindMin(r_heap, &nextRemove)
-            && top.identifier == nextRemove.identifier) {
-            HeapDeleteMin(r_heap);
-            HeapDeleteMin(p_heap);
-        }
+        CleanUpHeaps(p_heap, r_heap);
+        ElementType top = { 0,0,0 };
+        on = HeapTryFindMin(p_heap, &top);
 
-        // set color for next run based on top of p_heap
-        on = ! HeapIsEmpty(p_heap);
-        if (top.identifier >= 0) {
-            color = materials[top.identifier].color;
+        if (on) {
+            // set color for next run based on top of p_heap
+            //color = materials[top.identifier].color;
+            current = list[top.lookup];
+            color = materials[current.id].color;
+
+            // If there is another object underneath, we store the color for antialiasing.
+            ElementType nextObj = { 0,0,0 };
+            if (HeapTryFindNext(p_heap, &nextObj)) {
+                color_under = materials[nextObj.identifier].color;
+            } else {
+                color_under = 0;
+            }
         } else {
             color = 0;
         }
 
 
-#if 0
-        // EXPERIMENT: blend with next layer down...
-        auto nextObj = ElementType{ 0,-1,0 };
-        if (HeapTryFindNext(p_heap, &nextObj)) {
-            // if it's on the remove heap, we don't want to blend. It should be top if so.
-            if (HeapPeekMin(r_heap).identifier != nextObj.identifier) {
-                color_under = materials[nextObj.lookup].color;
-                color = Blend(127, color, color_under);
-            } else { // blend with black to stop things looking too weird
-                color = Blend(127, color, 0);
-            }
-        }
-        // END experiment
-#endif
 #if 0
         // DEBUG: show switch point in black
         int pixoff = ((yoff + sw.xpos - 1) * 4);

@@ -139,6 +139,7 @@
     <ClCompile Include="Entry.cpp" />
     <ClCompile Include="ImmediateDraw.cpp" />
     <ClCompile Include="ScanBufferDraw.cpp" />
+    <ClCompile Include="ScanBufferFont.cpp" />
     <ClCompile Include="Sort.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -150,6 +151,7 @@
     <ClInclude Include="BinHeap.h" />
     <ClInclude Include="ImmediateDraw.h" />
     <ClInclude Include="ScanBufferDraw.h" />
+    <ClInclude Include="ScanBufferFont.h" />
     <ClInclude Include="Sort.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

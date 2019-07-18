@@ -30,6 +30,9 @@
     <ClCompile Include="Sort.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ScanBufferFont.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x86\SDL2.lib" />
@@ -47,6 +50,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Sort.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanBufferFont.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
