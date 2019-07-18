@@ -15,9 +15,9 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
 // If defined, renderer will attempt 60fps. Otherwise, drawing will be as fast as possible
-#define FRAME_LIMIT 1
+//#define FRAME_LIMIT 1
 // If defined, renderer will run in a parallel thread. Otherwise, draw and render will run in sequence
-#define MULTITHREAD 1
+//#define MULTITHREAD 1
 
 // Two-thread rendering stuff:
 SDL_Thread *thread = NULL; // Thread for multi-pass rendering
@@ -156,17 +156,28 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
             ti % 255, ti % 255, 255);
     }
 
+//*/
     auto scale = (frame * 3) % 500;
     EllipseHole(scanBuf,
         400, 300, 10 + scale, 10 + scale,
         2,
         0, 0, 0);
-//*/
 
     // test font
-    AddGlyph(scanBuf, 'A', 20, 20, 1, 0xffffff);
-    AddGlyph(scanBuf, 'B', 30, 20, 1, 0xffffff);
-    AddGlyph(scanBuf, 'C', 40, 20, 1, 0xffffff);
+    int px = 2;
+    auto demo1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    auto demo2 = "HELLO WORLD! SCANLINE TEST";
+    for (int i = 0; i < 26; i++) {
+        AddGlyph(scanBuf, demo1[i], (2 + i) * 8, 20, 1, 0xffffff);
+        AddGlyph(scanBuf, demo2[i], (2 + i) * 8, 28, 1, 0xffffff);
+
+        // stress-test
+        for (int j = 0; j < 50; j++) {
+            AddGlyph(scanBuf, demo1[i], ( 2 + i) * 8, (j + 5) * 8, 3, 0xffffff);
+            AddGlyph(scanBuf, demo1[i], (29 + i) * 8, (j + 5) * 8, 4, 0xffffff);
+            AddGlyph(scanBuf, demo1[i], (56 + i) * 8, (j + 5) * 8, 5, 0xffffff);
+        }
+    }
 }
 
 
@@ -268,7 +279,9 @@ int main(int argc, char * argv[])
     float idleFraction = idleTime / (15.f*animationFrames);
     cout << "\r\nFPS ave = " << avgFPS << "\r\nIdle % = " << (100 * idleFraction);
 
+#ifdef MULTITHREAD
     while (!drawDone) { SDL_Delay(100); }// wait for the renderer to finish
+#endif
 
     // Wait for user to close the window
     /*SDL_Event close_event;
