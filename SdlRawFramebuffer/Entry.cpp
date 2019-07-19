@@ -18,6 +18,8 @@ const int SCREEN_HEIGHT = 600;
 #define FRAME_LIMIT 1
 // If defined, renderer will run in a parallel thread. Otherwise, draw and render will run in sequence
 #define MULTITHREAD 1
+// If defined, the output screen will remain visible after the test run is complete
+#define WAIT_AT_END 1
 
 // Two-thread rendering stuff:
 SDL_Thread *thread = NULL; // Thread for multi-pass rendering
@@ -287,13 +289,15 @@ int main(int argc, char * argv[])
     while (!drawDone) { SDL_Delay(100); }// wait for the renderer to finish
 #endif
 
+#ifdef WAIT_AT_END
     // Wait for user to close the window
-    /*SDL_Event close_event;
+    SDL_Event close_event;
     while (SDL_WaitEvent(&close_event)) {
         if (close_event.type == SDL_QUIT) {
             break;
         }
-    }*/
+    }
+#endif
 
     // Close up shop
     FreeScanBuffer(BufferA);

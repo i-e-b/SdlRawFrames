@@ -20,6 +20,7 @@
 #define __x_x__(y) 0x##y##02, 0x##y##03, 0x##y##04, 0x##y##05,
 #define _xx_x__(y) 0x##y##01, 0x##y##03, 0x##y##04, 0x##y##05,
 #define _xx_xx_(y) 0x##y##01, 0x##y##03, 0x##y##04, 0x##y##06,
+#define _xx__xx(y) 0x##y##01, 0x##y##03, 0x##y##05, 0x##y##07,
 #define __xx__x(y) 0x##y##02, 0x##y##04, 0x##y##06, 0x##y##07,
 #define xx_xx__(y) 0x##y##00, 0x##y##02, 0x##y##03, 0x##y##05,
 #define __xxx__(y) 0x##y##02, 0x##y##05,
@@ -622,6 +623,40 @@ uint16_t Rpar[] = { __xx___(07)
                     ___xx__(02)
                     __xx___(01) fEND };
 
+
+uint16_t Lbrk[] = { xxxxx__(07)
+                    xx_____(06)
+                    xx_____(05)
+                    xx_____(04)
+                    xx_____(03)
+                    xx_____(02)
+                    xxxxx__(01) fEND };
+
+uint16_t Rbrk[] = { xxxxx__(07)
+                    ___xx__(06)
+                    ___xx__(05)
+                    ___xx__(04)
+                    ___xx__(03)
+                    ___xx__(02)
+                    xxxxx__(01) fEND };
+
+
+uint16_t Lbce[] = { ____xx_(07)
+                    ___xx__(06)
+                    ___xx__(05)
+                    _xxx___(04)
+                    ___xx__(03)
+                    ___xx__(02)
+                    ____xx_(01) fEND };
+
+uint16_t Rbce[] = { __xx___(07)
+                    ___xx__(06)
+                    ___xx__(05)
+                    ____xxx(04)
+                    ___xx__(03)
+                    ___xx__(02)
+                    __xx___(01) fEND };
+
 uint16_t astr[] = { ___x___(07)
                     xx_x_xx(06)
                     __xxx__(05)
@@ -644,6 +679,13 @@ uint16_t fsla[] = { _____xx(06)
                     __xx___(03)
                     _xx____(02)
                     xx_____(01) fEND };
+
+uint16_t bsla[] = { xx_____(07)
+                    _xx____(06)
+                    __xx___(05)
+                    ___xx__(04)
+                    ____xx_(03)
+                    _____xx(02) fEND };
 
 uint16_t coln[] = { __xx___(06)
                     __xx___(05)
@@ -693,6 +735,30 @@ uint16_t cmat[] = { _xxxxx_(07)
                     xx_____(02)
                     _xxxxx_(01) fEND };
 
+
+uint16_t chev[] = { ___x___(07)
+                    __xxx__(06)
+                    _xx_xx_(05)
+                    xx___xx(04) fEND };
+
+uint16_t btik[] = { __xx___(07)
+                    ___xx__(06)
+                    ____xx_(05) fEND };
+
+uint16_t uscr[] = { xxxxxxx(00) fEND };
+
+uint16_t tild[] = { _xx__xx(05)
+                    xx_x_xx(04)
+                    xx__xx_(03) fEND };
+
+uint16_t vert[] = { ___x___(07)
+                    ___x___(06)
+                    ___x___(05)
+                    ___x___(04)
+                    ___x___(03)
+                    ___x___(02)
+                    ___x___(01) fEND };
+
 // Invalid char, control char, or not yet mapped
 uint16_t ____[] = { xxxxxxx(07)
                     _______(06)
@@ -708,11 +774,11 @@ uint16_t* charMap[] { // ASCII, starting from 33 (0x21) '!'
  ch_5, ch_6, ch_7, ch_8, ch_9, coln, scln, chLT, equl, chGT,
  ques, cmat, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, ch_G, ch_H, // UPPER CASE
  ch_I, ch_J, ch_K, ch_L, ch_M, ch_N, ch_O, ch_P, ch_Q, ch_R,
- ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z, ____, ____,
- ____, ____, ____, ____, ch_a, ch_b, ch_c, ch_d, ch_e, ch_f, // LOWER CASE
+ ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z, Lbrk, bsla,
+ Rbrk, chev, uscr, btik, ch_a, ch_b, ch_c, ch_d, ch_e, ch_f, // LOWER CASE
  ch_g, ch_h, ch_i, ch_j, ch_k, ch_l, ch_m, ch_n, ch_o, ch_p,
  ch_q, ch_r, ch_s, ch_t, ch_u, ch_v, ch_w, ch_x, ch_y, ch_z,
- ____, ____, ____, ____, ____
+ Lbce, vert, Rbce, tild, ____
 };
 
 // Set a point with an exact position, clipped to bounds
