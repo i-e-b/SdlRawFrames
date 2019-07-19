@@ -16,266 +16,563 @@
 #define xxxxxxx(y) 0x##y##00, 0x##y##07,
 #define xxxxxx_(y) 0x##y##00, 0x##y##06,
 #define xxxxx__(y) 0x##y##00, 0x##y##05,
+#define _xxx___(y) 0x##y##01, 0x##y##04,
 #define _xx_xx_(y) 0x##y##01, 0x##y##03, 0x##y##04, 0x##y##06,
+#define xx_xx__(y) 0x##y##00, 0x##y##02, 0x##y##03, 0x##y##05,
 #define __xxx__(y) 0x##y##02, 0x##y##05,
 #define _xxxxx_(y) 0x##y##01, 0x##y##06,
 #define xx_____(y) 0x##y##00, 0x##y##02,
 #define _xx____(y) 0x##y##01, 0x##y##03,
+#define __xx___(y) 0x##y##02, 0x##y##04,
+#define ___xx__(y) 0x##y##03, 0x##y##05,
+#define ____xx_(y) 0x##y##04, 0x##y##06,
+#define _____xx(y) 0x##y##05, 0x##y##07,
 #define xx__xx_(y) 0x##y##00, 0x##y##02, 0x##y##04, 0x##y##06,
+#define xxx_xx_(y) 0x##y##00, 0x##y##03, 0x##y##04, 0x##y##06,
 #define xx__xxx(y) 0x##y##00, 0x##y##02, 0x##y##04, 0x##y##07,
 #define xx_xxxx(y) 0x##y##00, 0x##y##02, 0x##y##03, 0x##y##07,
+#define x_xxxx_(y) 0x##y##00, 0x##y##01, 0x##y##02, 0x##y##06,
+#define x_xxx__(y) 0x##y##00, 0x##y##01, 0x##y##02, 0x##y##05,
 #define xx_xxx_(y) 0x##y##00, 0x##y##02, 0x##y##03, 0x##y##06,
 #define xxx_xxx(y) 0x##y##00, 0x##y##03, 0x##y##04, 0x##y##07,
 #define xxx__xx(y) 0x##y##00, 0x##y##03, 0x##y##05, 0x##y##07,
 #define xxxx_xx(y) 0x##y##00, 0x##y##04, 0x##y##05, 0x##y##07,
 #define _xxx_xx(y) 0x##y##01, 0x##y##04, 0x##y##05, 0x##y##07,
+#define _xxxx_x(y) 0x##y##01, 0x##y##05, 0x##y##06, 0x##y##07,
 #define xx_x_xx(y) 0x##y##00, 0x##y##02, 0x##y##03, 0x##y##04, 0x##y##05, 0x##y##07,
 #define ___x___(y) 0x##y##03, 0x##y##04,
 #define __xxxx_(y) 0x##y##02, 0x##y##06,
-#define ___xx__(y) 0x##y##03, 0x##y##05,
-#define ____xx_(y) 0x##y##04, 0x##y##06,
-#define _____xx(y) 0x##y##05, 0x##y##07,
+#define ____xxx(y) 0x##y##04, 0x##y##07,
 #define _______(y)  
 
 // Font data (hard coded basic 8x8)
 // pairs of ON & OFF; 1st byte is row, 2nd byte is xpos. 0xFFFF marks the end
 // row is upside-down, treat as negative offset from baseline.
-uint16_t ch_A[] = { __xxx__(06)
-                    _xx_xx_(05)
-                    xx___xx(04)
-                    xx___xx(03)
-                    xxxxxxx(02)
-                    xx___xx(01)
-                    xx___xx(00) fEND };
-
-uint16_t ch_B[] = { xxxxxx_(06)
-                    xx___xx(05)
-                    xx___xx(04)
-                    xxxxxx_(03)
-                    xx___xx(02)
-                    xx___xx(01)
-                    xxxxxx_(00) fEND };
-
-uint16_t ch_C[] = { _xxxxx_(06)
-                    xx___xx(05)
-                    xx_____(04)
-                    xx_____(03)
-                    xx_____(02)
-                    xx___xx(01)
-                    _xxxxx_(00) fEND };
-
-uint16_t ch_D[] = { xxxxxx_(06)
-                    xx___xx(05)
-                    xx___xx(04)
-                    xx___xx(03)
-                    xx___xx(02)
-                    xx___xx(01)
-                    xxxxxx_(00) fEND };
-
-uint16_t ch_E[] = { xxxxxxx(06)
-                    xx_____(05)
-                    xx_____(04)
-                    xxxxxx_(03)
-                    xx_____(02)
-                    xx_____(01)
-                    xxxxxxx(00) fEND };
-
-uint16_t ch_F[] = { xxxxxxx(06)
-                    xx_____(05)
-                    xx_____(04)
-                    xxxxxx_(03)
-                    xx_____(02)
-                    xx_____(01)
-                    xx_____(00) fEND };
-
-uint16_t ch_G[] = { _xxxxx_(06)
-                    xx___xx(05)
-                    xx_____(04)
-                    xx__xxx(03)
-                    xx___xx(02)
-                    xx___xx(01)
-                    _xxxxx_(00) fEND };
-
-uint16_t ch_H[] = { xx___xx(06)
+uint16_t ch_A[] = { __xxx__(07)
+                    _xx_xx_(06)
                     xx___xx(05)
                     xx___xx(04)
                     xxxxxxx(03)
                     xx___xx(02)
-                    xx___xx(01)
-                    xx___xx(00) fEND };
+                    xx___xx(01) fEND };
 
-uint16_t ch_I[] = { __xxxx_(06)
+uint16_t ch_a[] = { _______(07)
+                    _______(06)
+                    _xxxxx_(05)
+                    _____xx(04)
+                    _xxxxxx(03)
+                    xx___xx(02)
+                    _xxxx_x(01) fEND };
+
+uint16_t ch_B[] = { xxxxxx_(07)
+                    xx___xx(06)
+                    xx___xx(05)
+                    xxxxxx_(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    xxxxxx_(01) fEND };
+
+uint16_t ch_b[] = { xx_____(07)
+                    xx_____(06)
+                    xxxxxx_(05)
+                    xx___xx(04)
+                    xx___xx(03)
+                    xxx__xx(02)
+                    xx_xxx_(01) fEND };
+
+uint16_t ch_C[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx_____(05)
+                    xx_____(04)
+                    xx_____(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_c[] = { _______(07)
+                    _______(06)
+                    _xxxxx_(05)
+                    xx___xx(04)
+                    xx_____(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_D[] = { xxxxxx_(07)
+                    xx___xx(06)
+                    xx___xx(05)
+                    xx___xx(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    xxxxxx_(01) fEND };
+
+uint16_t ch_d[] = { _____xx(07)
+                    _____xx(06)
+                    _xxxxxx(05)
+                    xx___xx(04)
+                    xx___xx(03)
+                    xx__xxx(02)
+                    _xxxx_x(01) fEND };
+
+uint16_t ch_E[] = { xxxxxxx(07)
+                    xx_____(06)
+                    xx_____(05)
+                    xxxxxx_(04)
+                    xx_____(03)
+                    xx_____(02)
+                    xxxxxxx(01) fEND };
+
+uint16_t ch_e[] = { _______(07)
+                    _______(06)
+                    _xxxxx_(05)
+                    xx___xx(04)
+                    xxxxxxx(03)
+                    xx_____(02)
+                    _xxxxxx(01) fEND };
+
+uint16_t ch_F[] = { xxxxxxx(07)
+                    xx_____(06)
+                    xx_____(05)
+                    xxxxxx_(04)
+                    xx_____(03)
+                    xx_____(02)
+                    xx_____(01) fEND };
+
+uint16_t ch_f[] = { ____xxx(07)
+                    ___xx__(06)
+                    _xxxxxx(05)
+                    ___xx__(04)
+                    ___xx__(03)
+                    ___xx__(02)
+                    ___xx__(01) fEND };
+
+uint16_t ch_G[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx_____(05)
+                    xx__xxx(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_g[] = { _______(06)
+                    _xxxx_x(05)
+                    xx___xx(04)
+                    xx___xx(03)
+                    _xxxxxx(02)
+                    _____xx(01)
+                    _xxxxx_(00) fEND };
+
+uint16_t ch_H[] = { xx___xx(07)
+                    xx___xx(06)
+                    xx___xx(05)
+                    xxxxxxx(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    xx___xx(01) fEND };
+
+uint16_t ch_h[] = { xx_____(07)
+                    xx_____(06)
+                    xxxxxx_(05)
+                    xx___xx(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    xx___xx(01) fEND };
+
+uint16_t ch_I[] = { __xxxx_(07)
+                    ___xx__(06)
                     ___xx__(05)
                     ___xx__(04)
                     ___xx__(03)
                     ___xx__(02)
-                    ___xx__(01)
-                    __xxxx_(00) fEND };
+                    __xxxx_(01) fEND };
 
-uint16_t ch_J[] = { _____xx(06)
+uint16_t ch_i[] = { ___xx__(07)
+                    _______(06)
+                    __xxx__(05)
+                    ___xx__(04)
+                    ___xx__(03)
+                    ___xx__(02)
+                    ___xx__(01) fEND };
+
+uint16_t ch_J[] = { _____xx(07)
+                    _____xx(06)
                     _____xx(05)
                     _____xx(04)
                     _____xx(03)
-                    _____xx(02)
-                    xx___xx(01)
-                    _xxxxx_(00) fEND };
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
 
-uint16_t ch_K[] = { xx___xx(06)
+uint16_t ch_j[] = { ___xx__(07)
+                    _______(06)
+                    __xxx__(05)
+                    ___xx__(04)
+                    ___xx__(03)
+                    ___xx__(02)
+                    xx_xx__(01)
+                    _xxx___(00)  fEND };
+
+uint16_t ch_K[] = { xx___xx(07)
+                    xx___xx(06)
+                    xx__xx_(05)
+                    xxxxx__(04)
+                    xx__xx_(03)
+                    xx___xx(02)
+                    xx___xx(01) fEND };
+
+uint16_t ch_k[] = { xx_____(07)
+                    xx_____(06)
                     xx___xx(05)
                     xx__xx_(04)
                     xxxxx__(03)
                     xx__xx_(02)
-                    xx___xx(01)
-                    xx___xx(00) fEND };
+                    xx___xx(01) fEND };
 
-uint16_t ch_L[] = { xx_____(06)
+uint16_t ch_L[] = { xx_____(07)
+                    xx_____(06)
                     xx_____(05)
                     xx_____(04)
                     xx_____(03)
                     xx_____(02)
-                    xx_____(01)
-                    xxxxxxx(00) fEND };
+                    xxxxxxx(01) fEND };
 
-uint16_t ch_M[] = { xx___xx(06)
-                    xxx_xxx(05)
-                    xxxxxxx(04)
-                    xx_x_xx(03)
+uint16_t ch_l[] = { __xxx__(07)
+                    ___xx__(06)
+                    ___xx__(05)
+                    ___xx__(04)
+                    ___xx__(03)
+                    ___xx__(02)
+                    ____xxx(01) fEND };
+
+uint16_t ch_M[] = { xx___xx(07)
+                    xxx_xxx(06)
+                    xxxxxxx(05)
+                    xx_x_xx(04)
+                    xx___xx(03)
                     xx___xx(02)
-                    xx___xx(01)
-                    xx___xx(00) fEND };
+                    xx___xx(01) fEND };
 
-uint16_t ch_N[] = { xx___xx(06)
-                    xxx__xx(05)
-                    xxxx_xx(04)
-                    xxxxxxx(03)
-                    xx_xxxx(02)
-                    xx__xxx(01)
-                    xx___xx(00) fEND };
+uint16_t ch_m[] = { _______(07)
+                    _______(06)
+                    _xx_xx_(05)
+                    xx_x_xx(04)
+                    xx_x_xx(03)
+                    xx_x_xx(02)
+                    xx_x_xx(01) fEND };
 
-uint16_t ch_O[] = { _xxxxx_(06)
+uint16_t ch_N[] = { xx___xx(07)
+                    xxx__xx(06)
+                    xxxx_xx(05)
+                    xxxxxxx(04)
+                    xx_xxxx(03)
+                    xx__xxx(02)
+                    xx___xx(01) fEND };
+
+uint16_t ch_n[] = { _______(07)
+                    _______(06)
+                    xx_xx__(05)
+                    xxx_xx_(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    xx___xx(01) fEND };
+
+uint16_t ch_O[] = { _xxxxx_(07)
+                    xx___xx(06)
                     xx___xx(05)
                     xx___xx(04)
                     xx___xx(03)
                     xx___xx(02)
-                    xx___xx(01)
-                    _xxxxx_(00) fEND };
+                    _xxxxx_(01) fEND };
 
-uint16_t ch_P[] = { xxxxxx_(06)
+uint16_t ch_o[] = { _______(07)
+                    _______(06)
+                    _xxxxx_(05)
+                    xx___xx(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_P[] = { xxxxxx_(07)
+                    xx___xx(06)
                     xx___xx(05)
+                    xx___xx(04)
+                    xxxxxx_(03)
+                    xx_____(02)
+                    xx_____(01) fEND };
+
+uint16_t ch_p[] = { _______(06)
+                    x_xxxx_(05)
                     xx___xx(04)
                     xx___xx(03)
                     xxxxxx_(02)
                     xx_____(01)
                     xx_____(00) fEND };
 
-uint16_t ch_Q[] = { _xxxxx_(06)
+uint16_t ch_Q[] = { _xxxxx_(07)
+                    xx___xx(06)
                     xx___xx(05)
+                    xx___xx(04)
+                    xx_xxx_(03)
+                    xx__xxx(02)
+                    _xxx_xx(01) fEND };
+
+uint16_t ch_q[] = { _______(06)
+                    _xxxx_x(05)
                     xx___xx(04)
                     xx___xx(03)
+                    _xxxxxx(02)
+                    _____xx(01)
+                    _____xx(00) fEND };
+
+uint16_t ch_R[] = { xxxxxx_(07)
+                    xx___xx(06)
+                    xx___xx(05)
+                    xx__xx_(04)
+                    xxxxx__(03)
                     xx_xxx_(02)
-                    xx__xxx(01)
-                    _xxx_xx(00) fEND };
+                    xx__xxx(01) fEND };
 
-uint16_t ch_R[] = { xxxxxx_(06)
-                    xx___xx(05)
-                    xx___xx(04)
-                    xx__xx_(03)
-                    xxxxx__(02)
-                    xx_xxx_(01)
-                    xx__xxx(00) fEND };
+uint16_t ch_r[] = { _______(07)
+                    _______(06)
+                    x_xxx__(05)
+                    xx__xx_(04)
+                    xx_____(03)
+                    xx_____(02)
+                    xx_____(01) fEND };
 
-uint16_t ch_S[] = { _xxxxx_(06)
-                    xx___xx(05)
+uint16_t ch_S[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx_____(05)
+                    _xxxxx_(04)
+                    _____xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_s[] = { _______(07)
+                    _______(06)
+                    _xxxxx_(05)
                     xx_____(04)
                     _xxxxx_(03)
                     _____xx(02)
-                    xx___xx(01)
-                    _xxxxx_(00) fEND };
+                    _xxxxx_(01) fEND };
 
-uint16_t ch_T[] = { _xxxxxx(06)
+uint16_t ch_T[] = { _xxxxxx(07)
+                    ___xx__(06)
                     ___xx__(05)
                     ___xx__(04)
                     ___xx__(03)
                     ___xx__(02)
-                    ___xx__(01)
-                    ___xx__(00) fEND };
+                    ___xx__(01) fEND };
 
-uint16_t ch_U[] = { xx___xx(06)
+uint16_t ch_t[] = { _______(07)
+                    xx_____(06)
+                    xxxxx__(05)
+                    xx_____(04)
+                    xx_____(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_U[] = { xx___xx(07)
+                    xx___xx(06)
                     xx___xx(05)
                     xx___xx(04)
                     xx___xx(03)
                     xx___xx(02)
-                    xx___xx(01)
-                    _xxxxx_(00) fEND };
+                    _xxxxx_(01) fEND };
 
-uint16_t ch_V[] = { xx___xx(06)
+uint16_t ch_u[] = { _______(07)
+                    _______(06)
                     xx___xx(05)
                     xx___xx(04)
                     xx___xx(03)
-                    _xx_xx_(02)
-                    __xxx__(01)
-                    ___x___(00) fEND };
+                    xx___xx(02)
+                    _xxxx_x(01) fEND };
 
-uint16_t ch_W[] = { xx___xx(06)
+uint16_t ch_V[] = { xx___xx(07)
+                    xx___xx(06)
                     xx___xx(05)
                     xx___xx(04)
-                    xx_x_xx(03)
-                    xxxxxxx(02)
-                    xxx_xxx(01)
-                    xx___xx(00) fEND };
+                    _xx_xx_(03)
+                    __xxx__(02)
+                    ___x___(01) fEND };
 
-uint16_t ch_X[] = { xx___xx(06)
+uint16_t ch_v[] = { _______(07)
+                    _______(06)
+                    xx___xx(05)
+                    xx___xx(04)
+                    _xx_xx_(03)
+                    __xxx__(02)
+                    ___x___(01) fEND };
+
+uint16_t ch_W[] = { xx___xx(07)
+                    xx___xx(06)
+                    xx___xx(05)
+                    xx_x_xx(04)
+                    xxxxxxx(03)
+                    xxx_xxx(02)
+                    xx___xx(01) fEND };
+
+uint16_t ch_w[] = { _______(07)
+                    _______(06)
+                    xx_x_xx(05)
+                    xx_x_xx(04)
+                    xx_x_xx(03)
+                    xx_x_xx(02)
+                    _xx_xx_(01) fEND };
+
+uint16_t ch_X[] = { xx___xx(07)
+                    xx___xx(06)
+                    _xx_xx_(05)
+                    __xxx__(04)
+                    _xx_xx_(03)
+                    xx___xx(02)
+                    xx___xx(01) fEND };
+
+uint16_t ch_x[] = { _______(07)
+                    _______(06)
                     xx___xx(05)
                     _xx_xx_(04)
                     __xxx__(03)
                     _xx_xx_(02)
-                    xx___xx(01)
-                    xx___xx(00) fEND };
+                    xx___xx(01) fEND };
 
-uint16_t ch_Y[] = { xx___xx(06)
-                    xx___xx(05)
-                    _xx_xx_(04)
-                    __xxx__(03)
+uint16_t ch_Y[] = { xx___xx(07)
+                    xx___xx(06)
+                    _xx_xx_(05)
+                    __xxx__(04)
+                    ___xx__(03)
                     ___xx__(02)
-                    ___xx__(01)
-                    ___xx__(00) fEND };
+                    ___xx__(01) fEND };
 
-uint16_t ch_Z[] = { xxxxxxx(06)
-                    _____xx(05)
+uint16_t ch_y[] = { _______(06)
+                    xx___xx(05)
+                    xx___xx(04)
+                    xx___xx(03)
+                    _xxxxxx(02)
+                    _____xx(01)
+                    _xxxxx_(00) fEND };
+
+uint16_t ch_Z[] = { xxxxxxx(07)
+                    _____xx(06)
+                    ____xx_(05)
+                    __xxx__(04)
+                    _xx____(03)
+                    xx_____(02)
+                    xxxxxxx(01) fEND };
+
+uint16_t ch_z[] = { _______(07)
+                    _______(06)
+                    xxxxxxx(05)
                     ____xx_(04)
                     __xxx__(03)
                     _xx____(02)
-                    xx_____(01)
-                    xxxxxxx(00) fEND };
+                    xxxxxxx(01) fEND };
 
-uint16_t Bang[] = { ___xx__(06)
+uint16_t Bang[] = { ___xx__(07)
+                    __xxxx_(06)
                     __xxxx_(05)
-                    __xxxx_(04)
+                    ___xx__(04)
+                    _______(03)
+                    ___xx__(02)
+                    ___xx__(01) fEND };
+
+uint16_t ch_0[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx__xxx(05)
+                    xx_x_xx(04)
+                    xxx__xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_1[] = { ___xx__(07)
+                    xxxxx__(06)
+                    ___xx__(05)
+                    ___xx__(04)
                     ___xx__(03)
-                    _______(02)
-                    ___xx__(01)
-                    ___xx__(00) fEND };
+                    ___xx__(02)
+                    _xxxxxx(01) fEND };
+
+uint16_t ch_2[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    ____xx_(05)
+                    ___xx__(04)
+                    __xx___(03)
+                    _xx____(02)
+                    xxxxxxx(01) fEND };
+
+uint16_t ch_3[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    _____xx(05)
+                    __xxxx_(04)
+                    _____xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_4[] = { xx__xx_(07)
+                    xx__xx_(06)
+                    xx__xx_(05)
+                    xx__xx_(04)
+                    xxxxxxx(03)
+                    ____xx_(02)
+                    ____xx_(01) fEND };
+
+uint16_t ch_5[] = { xxxxxxx(07)
+                    xx_____(06)
+                    xxxxxx_(05)
+                    xx___xx(04)
+                    _____xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_6[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx_____(05)
+                    xxxxxx_(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_7[] = { xxxxxxx(07)
+                    xx___xx(06)
+                    ____xx_(05)
+                    ___xx__(04)
+                    __xx___(03)
+                    __xx___(02)
+                    __xx___(01) fEND };
+
+uint16_t ch_8[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx___xx(05)
+                    _xxxxx_(04)
+                    xx___xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
+
+uint16_t ch_9[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx___xx(05)
+                    _xxxxxx(04)
+                    _____xx(03)
+                    xx___xx(02)
+                    _xxxxx_(01) fEND };
 
 // Invalid char, control char, or not yet mapped
-uint16_t chIV[] = { xxxxxxx(06)
-                    _______(05)
-                    xxxxxxx(04)
-                    _______(03)
-                    xxxxxxx(02)
-                    _______(01)
-                    xxxxxxx(00) fEND };
+uint16_t inv_[] = { xxxxxxx(07)
+                    _______(06)
+                    xxxxxxx(05)
+                    _______(04)
+                    xxxxxxx(03)
+                    _______(02)
+                    xxxxxxx(01) fEND };
 
 uint16_t* charMap[] { // ASCII, starting from 33 (0x21) '!'
- Bang, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, // PUNCT & NUM
- chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV,
- chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV, chIV,
- chIV, chIV, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, ch_G, ch_H, // UPPER CASE
+ Bang, inv_, inv_, inv_, inv_, inv_, inv_, inv_, inv_, inv_, // PUNCT & NUM
+ inv_, inv_, inv_, inv_, inv_, ch_0, ch_1, ch_2, ch_3, ch_4,
+ ch_5, ch_6, ch_7, ch_8, ch_9, inv_, inv_, inv_, inv_, inv_,
+ inv_, inv_, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, ch_G, ch_H, // UPPER CASE
  ch_I, ch_J, ch_K, ch_L, ch_M, ch_N, ch_O, ch_P, ch_Q, ch_R,
- ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z, chIV, chIV,
- chIV, chIV, chIV, chIV, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, // LOWER CASE
- ch_G, ch_H, ch_I, ch_J, ch_K, ch_L, ch_M, ch_N, ch_O, ch_P,
- ch_Q, ch_R, ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z,
- chIV, chIV, chIV, chIV, chIV
+ ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z, inv_, inv_,
+ inv_, inv_, inv_, inv_, ch_a, ch_b, ch_c, ch_d, ch_e, ch_f, // LOWER CASE
+ ch_g, ch_h, ch_i, ch_j, ch_k, ch_l, ch_m, ch_n, ch_o, ch_p,
+ ch_q, ch_r, ch_s, ch_t, ch_u, ch_v, ch_w, ch_x, ch_y, ch_z,
+ inv_, inv_, inv_, inv_, inv_
 };
 
 // Set a point with an exact position, clipped to bounds
@@ -303,7 +600,7 @@ void AddGlyph(ScanBuffer *buf, char c, int x, int y, int z, uint32_t color) {
     for (int i = 0; i < SAFETY_LIMIT; i++) {
         if (points[i] == 0xFFFF) break;
         int px = x + (points[i] & 0xff);
-        int py = y - (points[i] >> 8);
+        int py = y - (points[i] >> 8) + 1;
         SetSP(buf, px, py, objId, on);
         on = !on;
     }
