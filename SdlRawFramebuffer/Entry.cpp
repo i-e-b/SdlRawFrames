@@ -177,13 +177,26 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         AddGlyph(scanBuf, demo3[i], (2 + i) * 8, 36, 1, 0x77ffff);
 
         // stress-test
-        /*
-        for (int j = 0; j < 50; j++) {
-            AddGlyph(scanBuf, demo1[i], ( 2 + i) * 8, (j + 5) * 8, 3, 0xffffff);
-            AddGlyph(scanBuf, demo1[i], (56 + i) * 8, (j + 5) * 8, 5, 0xffffff);
+        ///*
+        for (int j = 0; j < 70; j++) {
+            AddGlyph(scanBuf, demo1[i], (i) * 8, (j + 7) * 8 + ((i+(frame>>2))%5), 3, 0x77ffff);
+            AddGlyph(scanBuf, demo1[i], (52 + i) * 8, (j + 7) * 8 + ((i+(frame>>2))%5), 15, 0xffff77);
         }
         //*/
     }
+
+
+    // quick test: number of points:
+    /*int k,j = 0;
+    int m = 0;
+    for (int i = 0; i < scanBuf->height; i++) {
+        k = scanBuf->scanLines[i].count;
+        j+=k;
+        if (k > m)m = k;
+    }
+    cout << "\nTotal items drawn: " << scanBuf->itemCount;
+    cout << "\nTotal switch points: " << j;
+    cout << "\nLargest line: " << m;*/
 }
 
 

@@ -792,6 +792,8 @@ uint16_t* charMap[] { // ASCII, starting from 33 (0x21) '!'
 void AddGlyph(ScanBuffer *buf, char c, int x, int y, int z, uint32_t color) {
     if (buf == NULL) return;
     if (c < 33 || c > 126) return;
+    if (x < -7 || x > buf->width) return;
+    if (y < -1 || y > buf->height + 8) return;
 
     // pick a char block. For now, just use 'A'
     uint16_t* points = charMap[c - 33];
