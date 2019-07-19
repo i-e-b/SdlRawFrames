@@ -17,7 +17,10 @@
 #define xxxxxx_(y) 0x##y##00, 0x##y##06,
 #define xxxxx__(y) 0x##y##00, 0x##y##05,
 #define _xxx___(y) 0x##y##01, 0x##y##04,
+#define __x_x__(y) 0x##y##02, 0x##y##03, 0x##y##04, 0x##y##05,
+#define _xx_x__(y) 0x##y##01, 0x##y##03, 0x##y##04, 0x##y##05,
 #define _xx_xx_(y) 0x##y##01, 0x##y##03, 0x##y##04, 0x##y##06,
+#define __xx__x(y) 0x##y##02, 0x##y##04, 0x##y##06, 0x##y##07,
 #define xx_xx__(y) 0x##y##00, 0x##y##02, 0x##y##03, 0x##y##05,
 #define __xxx__(y) 0x##y##02, 0x##y##05,
 #define _xxxxx_(y) 0x##y##01, 0x##y##06,
@@ -41,6 +44,7 @@
 #define _xxxx_x(y) 0x##y##01, 0x##y##05, 0x##y##06, 0x##y##07,
 #define xx_x_xx(y) 0x##y##00, 0x##y##02, 0x##y##03, 0x##y##04, 0x##y##05, 0x##y##07,
 #define ___x___(y) 0x##y##03, 0x##y##04,
+#define __x____(y) 0x##y##02, 0x##y##03,
 #define __xxxx_(y) 0x##y##02, 0x##y##06,
 #define ____xxx(y) 0x##y##04, 0x##y##07,
 #define _______(y)  
@@ -553,8 +557,144 @@ uint16_t ch_9[] = { _xxxxx_(07)
                     xx___xx(02)
                     _xxxxx_(01) fEND };
 
+uint16_t cmma[] = { __xx___(03)
+                    __xx___(02)
+                    ___x___(01)
+                    __x____(00) fEND };
+
+uint16_t stop[] = { __xx___(02)
+                    __xx___(01) fEND };
+
+uint16_t dqot[] = { _xx_xx_(07)
+                    _xx_xx_(06)
+                    __x_x__(05) fEND };
+
+uint16_t quot[] = { __xx___(07)
+                    __xx___(06)
+                    ___x___(05)
+                    __x____(04) fEND };
+
+uint16_t hash[] = { _xx_xx_(07)
+                    xxxxxxx(06)
+                    _xx_xx_(05)
+                    _xx_xx_(04)
+                    _xx_xx_(03)
+                    xxxxxxx(02)
+                    _xx_xx_(01) fEND };
+
+uint16_t dola[] = { ___xx__(07)
+                    _xxxxx_(06)
+                    xx_____(05)
+                    _xxxxx_(04)
+                    _____xx(03)
+                    _xxxxx_(02)
+                    ___xx__(01) fEND };
+
+uint16_t prcn[] = { xx___xx(07)
+                    xx___xx(06)
+                    ____xx_(05)
+                    __xxx__(04)
+                    _xx____(03)
+                    xx___xx(02)
+                    xx___xx(01) fEND };
+
+uint16_t amps[] = { __xx___(07)
+                    _xx_x__(06)
+                    _xx_x__(05)
+                    __xx__x(04)
+                    xx_xxx_(03)
+                    xx__xx_(02)
+                    _xxx_xx(01) fEND };
+
+uint16_t Lpar[] = { __xx___(07)
+                    _xx____(06)
+                    xx_____(05)
+                    xx_____(04)
+                    xx_____(03)
+                    _xx____(02)
+                    __xx___(01) fEND };
+
+uint16_t Rpar[] = { __xx___(07)
+                    ___xx__(06)
+                    ____xx_(05)
+                    ____xx_(04)
+                    ____xx_(03)
+                    ___xx__(02)
+                    __xx___(01) fEND };
+
+uint16_t astr[] = { ___x___(07)
+                    xx_x_xx(06)
+                    __xxx__(05)
+                    ___x___(04)
+                    __xxx__(03)
+                    xx_x_xx(02)
+                    ___x___(01) fEND };
+
+uint16_t plus[] = { ___x___(06)
+                    ___x___(05)
+                    _xxxxx_(04)
+                    ___x___(03)
+                    ___x___(02)fEND };
+
+uint16_t negv[] = { _xxxxx_(04)fEND };
+
+uint16_t fsla[] = { _____xx(06)
+                    ____xx_(05)
+                    ___xx__(04)
+                    __xx___(03)
+                    _xx____(02)
+                    xx_____(01) fEND };
+
+uint16_t coln[] = { __xx___(06)
+                    __xx___(05)
+                    _______(04)
+                    _______(03)
+                    __xx___(02)
+                    __xx___(01) fEND };
+
+uint16_t scln[] = { __xx___(06)
+                    __xx___(05)
+                    _______(04)
+                    __xx___(03)
+                    __xx___(02)
+                    ___x___(01)
+                    __x____(00) fEND };
+
+uint16_t chLT[] = { ____xx_(06)
+                    __xx___(05)
+                    xx_____(04)
+                    __xx___(03)
+                    ____xx_(02) fEND };
+
+uint16_t chGT[] = { xx_____(06)
+                    __xx___(05)
+                    ____xx_(04)
+                    __xx___(03)
+                    xx_____(02) fEND };
+
+uint16_t equl[] = { xxxxxxx(05)
+                    _______(04)
+                    xxxxxxx(03) fEND };
+
+
+uint16_t ques[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx__xx_(05)
+                    ___xx__(04)
+                    __xx___(03)
+                    _______(02)
+                    __xx___(01) fEND };
+
+uint16_t cmat[] = { _xxxxx_(07)
+                    xx___xx(06)
+                    xx__xxx(05)
+                    xx_x_xx(04)
+                    xx__xxx(03)
+                    xx_____(02)
+                    _xxxxx_(01) fEND };
+
 // Invalid char, control char, or not yet mapped
-uint16_t inv_[] = { xxxxxxx(07)
+uint16_t ____[] = { xxxxxxx(07)
                     _______(06)
                     xxxxxxx(05)
                     _______(04)
@@ -563,16 +703,16 @@ uint16_t inv_[] = { xxxxxxx(07)
                     xxxxxxx(01) fEND };
 
 uint16_t* charMap[] { // ASCII, starting from 33 (0x21) '!'
- Bang, inv_, inv_, inv_, inv_, inv_, inv_, inv_, inv_, inv_, // PUNCT & NUM
- inv_, inv_, inv_, inv_, inv_, ch_0, ch_1, ch_2, ch_3, ch_4,
- ch_5, ch_6, ch_7, ch_8, ch_9, inv_, inv_, inv_, inv_, inv_,
- inv_, inv_, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, ch_G, ch_H, // UPPER CASE
+ Bang, dqot, hash, dola, prcn, amps, quot, Lpar, Rpar, astr, // PUNCT & NUM
+ plus, cmma, negv, stop, fsla, ch_0, ch_1, ch_2, ch_3, ch_4,
+ ch_5, ch_6, ch_7, ch_8, ch_9, coln, scln, chLT, equl, chGT,
+ ques, cmat, ch_A, ch_B, ch_C, ch_D, ch_E, ch_F, ch_G, ch_H, // UPPER CASE
  ch_I, ch_J, ch_K, ch_L, ch_M, ch_N, ch_O, ch_P, ch_Q, ch_R,
- ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z, inv_, inv_,
- inv_, inv_, inv_, inv_, ch_a, ch_b, ch_c, ch_d, ch_e, ch_f, // LOWER CASE
+ ch_S, ch_T, ch_U, ch_V, ch_W, ch_X, ch_Y, ch_Z, ____, ____,
+ ____, ____, ____, ____, ch_a, ch_b, ch_c, ch_d, ch_e, ch_f, // LOWER CASE
  ch_g, ch_h, ch_i, ch_j, ch_k, ch_l, ch_m, ch_n, ch_o, ch_p,
  ch_q, ch_r, ch_s, ch_t, ch_u, ch_v, ch_w, ch_x, ch_y, ch_z,
- inv_, inv_, inv_, inv_, inv_
+ ____, ____, ____, ____, ____
 };
 
 // Set a point with an exact position, clipped to bounds

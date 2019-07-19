@@ -166,22 +166,21 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 
     // test font
     int px = 2;
-    auto demo1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    auto demo2 = "Hello, world! 0123456789()";
-    auto demo3 = "abcdefghijklmnopqrstuvwxyz";
-    for (int i = 0; i < 26; i++) {
-        AddGlyph(scanBuf, demo1[i], (2 + i) * 8, 20, 1, 0xffffff);
-        AddGlyph(scanBuf, demo2[i], (2 + i) * 8, 28, 1, 0xff77ff);
+    auto demo1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    auto demo2 = "Hello, world! 0123456789 !\"#$%&'()*+,-./:;<=>?`{}|~@";
+    auto demo3 = "The quick brown fox jumped over the lazy dog []\\^_..";
+    for (int i = 0; i < 52; i++) {
+        AddGlyph(scanBuf, demo1[i], (2 + i) * 8, 20, 1, (i+1) * 322638);
+        AddGlyph(scanBuf, demo2[i], (2 + i) * 8, 28, 1, 0xffffff);
         AddGlyph(scanBuf, demo3[i], (2 + i) * 8, 36, 1, 0x77ffff);
 
         // stress-test
         /*
         for (int j = 0; j < 50; j++) {
             AddGlyph(scanBuf, demo1[i], ( 2 + i) * 8, (j + 5) * 8, 3, 0xffffff);
-            AddGlyph(scanBuf, demo1[i], (29 + i) * 8, (j + 5) * 8, 4, 0xffffff);
             AddGlyph(scanBuf, demo1[i], (56 + i) * 8, (j + 5) * 8, 5, 0xffffff);
         }
-        */
+        //*/
     }
 }
 
