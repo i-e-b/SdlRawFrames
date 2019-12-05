@@ -12,6 +12,15 @@ using namespace std;
 
 #define OBJECT_MAX 65535
 
+// NOTES:
+
+// Backgrounds: To set a general background color, the first position (possibly at pos= -1) should be an 'ON' at the furthest depth per scanline.
+//              There should be no matching 'OFF'.
+//              In areas where there is no fill present, no change to the existing image is made.
+
+// Holes: A CCW winding polygon will have 'OFF's before 'ON's, being inside-out. If a single 'ON' is set before this shape
+//        (Same as a background) then we will fill only where the polygon is *not* present -- this makes vignette effects simple
+
 ScanBuffer * InitScanBuffer(int width, int height)
 {
     auto buf = (ScanBuffer*)calloc(1, sizeof(ScanBuffer));
@@ -77,26 +86,19 @@ inline void SetSP(ScanBuffer * buf, int x, int y, uint16_t objectId, uint8_t isO
     if (y < 0 || y > buf->height) return;
     
    // SwitchPoint sp;
-    ScanLine line = buf->scanLines[y];
-    /*if (line.points == NULL) {
-        std::cout << "\nScan buffer not ready";
-        return;
-    }
-    if (line.count < 0) {
-        std::cout << "\nOverflow!";
-        buf->scanLines[y].count = 0;
-        return;
-    }*/
-    if (line.count >= line.length) return; // buffer full. TODO: grow?
+    ScanLine* line = &(buf->scanLines[y]);
 
-    auto idx = line.count;
-    auto points = line.points;
+	if (line->count >= line->length) return; // buffer full. TODO: grow?
+
+    auto idx = line->count;
+    auto points = line->points;
 
     points[idx].xpos = (x < 0) ? 0 : x;
     points[idx].id = objectId;
     points[idx].state = isOn;
 
-    buf->scanLines[y].count++; // increment pointer
+	line->dirty = true; // ensure it's marked dirty
+	line->count++; // increment pointer
 }
 
 inline void SetMaterial(ScanBuffer* buf, uint16_t objectId, int depth, uint32_t color) {
@@ -420,6 +422,7 @@ void ClearScanBuffer(ScanBuffer * buf)
     for (int i = 0; i < buf->height; i++)
     {
         buf->scanLines[i].count = 0;
+        buf->scanLines[i].dirty = true;
     }
 }
 
@@ -476,16 +479,19 @@ void RenderScanLine(
     int lineIndex,               // index of the line we're drawing
     BYTE* data                   // target frame-buffer
 ) {
-    auto scanLine = buf->scanLines[lineIndex];
-    auto tmpLine = buf->scanLines[buf->height];
+	auto scanLine = &(buf->scanLines[lineIndex]);
+	if (scanLine->dirty == false) return;
+	scanLine->dirty = false;
+
+    auto tmpLine = &(buf->scanLines[buf->height]);
 
     int yoff = buf->width * lineIndex;
     auto materials = buf->materials;
-    auto count = scanLine.count;
+    auto count = scanLine->count;
     auto width = buf->width;
 
     // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
-    auto list = IterativeMergeSort(scanLine.points, tmpLine.points, count);
+    auto list = IterativeMergeSort(scanLine->points, tmpLine->points, count);
 
     
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap
@@ -583,11 +589,3 @@ void RenderBuffer(
     }
 }
 
-// NOTES:
-
-// Backgrounds: To set a general background color, the first position (possibly at pos= -1) should be an 'ON' at the furthest depth.
-//              There should be no matching 'OFF'.
-//              In areas where there is no fill present, no change to the existing image is made.
-
-// Holes: A CCW winding polygon will have 'OFF's before 'ON's, being inside-out. If a single 'ON' is set before this shape
-//        (Same as a background) then we will fill only where the polygon is *not* present -- this makes vignette effects simple

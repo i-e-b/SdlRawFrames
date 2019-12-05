@@ -30,6 +30,7 @@ typedef struct Material {
 } Material;
 
 typedef struct ScanLine {
+	bool dirty;				// set to `true` when the scanline is updated
     int32_t count;          // number of items in the array
     int32_t length;         // memory length of the array
 

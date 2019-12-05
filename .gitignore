@@ -6,3 +6,4 @@ _Resharper*
 *.vsp
 *.vspx
 *.psess
+*.coverage
