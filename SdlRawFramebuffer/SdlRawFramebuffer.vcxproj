@@ -136,7 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BinHeap.cpp" />
-    <ClCompile Include="Entry.cpp" />
+    <ClCompile Include="_EntryPoint_.cpp" />
     <ClCompile Include="ImmediateDraw.cpp" />
     <ClCompile Include="ScanBufferDraw.cpp" />
     <ClCompile Include="ScanBufferFont.cpp" />

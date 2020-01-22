@@ -30,6 +30,72 @@ inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
     return (p1 < p2);
 }
 
+inline int cmpval(SwitchPoint p) {
+	return (p.xpos << 1) + p.state;
+}
+
+void quicksort_rec(SwitchPoint* A, int len) {
+  if (len < 2) return;
+ 
+  int pivotPoint = len / 2;
+  int pivot = cmpval(A[pivotPoint]);
+ 
+  int i, j;
+  for (i = 0, j = len - 1; ; i++, j--) {
+    //while (cmp(A, i, pivotPoint)) i++;
+    //while (cmp(A, pivotPoint, j)) j--;
+    while (cmpval(A[i]) < pivot) i++;
+    while (cmpval(A[j]) > pivot) j--;
+ 
+    if (i >= j) break;
+ 
+    auto temp = A[i];
+    A[i]     = A[j];
+    A[j]     = temp;
+  }
+ 
+  quicksort_rec(A, i);
+  quicksort_rec(A + i, len - i);
+}
+
+SwitchPoint* QuickSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
+    quicksort_rec(source, n);
+    return source;
+}
+
+// most significant bit first in-place radix sort.
+void radsort_rec(SwitchPoint* A, int from, int to, int bit)
+{
+	if (!bit || to < from + 1) return;
+ 
+    int leftIdx = from;
+    int rightIdx = to - 1;
+
+	for (;;) {
+		// find left most with bit, and right most without bit
+		while (leftIdx < rightIdx && !(cmpval(A[leftIdx]) & bit)) leftIdx++;
+		while (leftIdx < rightIdx &&  (cmpval(A[rightIdx]) & bit)) rightIdx--;
+
+		if (leftIdx >= rightIdx) break; // not found
+
+        // swap
+		auto temp = A[leftIdx];
+		A[leftIdx] = A[rightIdx];
+		A[rightIdx] = temp;
+	}
+ 
+	if (!(cmpval(A[leftIdx]) & bit) && leftIdx < to) leftIdx++;
+	bit >>= 1;
+ 
+	radsort_rec(A, from, leftIdx, bit);
+	radsort_rec(A, leftIdx, to, bit);
+}
+
+SwitchPoint* RadixSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
+	radsort_rec(source, 0, n, 1 << 12); // the bit is very sensitive to structure of 'SwitchPoint'
+    return source;
+}
+
 // Merge with minimal copies
 SwitchPoint* IterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
     if (n < 2) return source;

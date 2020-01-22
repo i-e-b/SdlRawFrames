@@ -314,6 +314,23 @@ void FillTriQuad(ScanBuffer *buf,
     buf->itemCount++;
 }
 
+float isqrt(float number) {
+	long i;
+	float x2, y;
+	int j;
+	const float threehalfs = 1.5F;
+
+	x2 = number * 0.5F;
+	y = number;
+	i = *(long*)&y;
+	i = 0x5f3759df - (i >> 1);
+	y = *(float*)&i;
+	j = 3;
+	while (j--) {	y = y * (threehalfs - (x2 * y * y)); }
+
+	return y;
+}
+
 void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, int r, int g, int b)
 {
     if (w < 1) return; // empty
@@ -325,10 +342,9 @@ void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, in
     float ndx = (float)( -(y1 - y0) );
 
     // normalise
-    float mag = sqrt((ndy*ndy) + (ndx*ndx));
-    if (mag == 0) return; // no line
-    ndx *= w / mag;
-    ndy *= w / mag;
+    float mag = isqrt((ndy*ndy) + (ndx*ndx));
+    ndx *= w * mag;
+    ndy *= w * mag;
 
     int hdx = (int)(ndx / 2);
     int hdy = (int)(ndy / 2);
@@ -492,6 +508,8 @@ void RenderScanLine(
 
     // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
     auto list = IterativeMergeSort(scanLine->points, tmpLine->points, count);
+    //auto list = QuickSort(scanLine->points, tmpLine->points, count);
+    //auto list = RadixSort(scanLine->points, tmpLine->points, count);
 
     
     auto p_heap = (PriorityQueue)buf->p_heap;   // presentation heap

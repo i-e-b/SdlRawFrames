@@ -9,4 +9,12 @@
 // The final result could be in source OR tmp, so we return the pointer to the result
 SwitchPoint* IterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n);
 
+// Quicksort function to sort arr[0...n-1]
+// this ignores the extra 'tmp' space
+SwitchPoint* QuickSort(SwitchPoint* source, SwitchPoint* tmp, int n);
+
+// In-place MSB radix sort for arr[0...n-1]
+// this ignores the extra 'tmp' space
+SwitchPoint* RadixSort(SwitchPoint* source, SwitchPoint* tmp, int n);
+
 #endif

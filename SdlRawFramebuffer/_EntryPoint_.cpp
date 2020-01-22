@@ -145,7 +145,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         5, 2, // width
         255, 0, 255);
     
- /*
+ ///*
     // a whole bunch of small triangles
     // as a torture test. Also wraps top/bottom
     for (int ti = 0; ti < 6000; ti++) {
@@ -177,7 +177,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         AddGlyph(scanBuf, demo3[i], (2 + i) * 8, 36, 1, 0x77ffff);
 
         // stress-test
-        /*
+        //*
         for (int j = 0; j < 70; j++) {
             AddGlyph(scanBuf, demo1[i], (i) * 8, (j + 7) * 8 + ((i+(frame>>2))%5), 3, 0x77ffff);
             AddGlyph(scanBuf, demo1[i], (52 + i) * 8, (j + 7) * 8 + ((i+(frame>>2))%5), 15, 0xffff77);
