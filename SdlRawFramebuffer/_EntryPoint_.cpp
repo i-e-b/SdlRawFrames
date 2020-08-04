@@ -199,7 +199,8 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
     cout << "\nLargest line: " << m;*/
 }
 
-
+// We undefine the `main` macro in SDL_main.h, because it confuses the linker.
+#undef main
 int main(int argc, char * argv[])
 {
     //The window we'll be rendering to
@@ -260,7 +261,7 @@ int main(int argc, char * argv[])
         SDL_UpdateWindowSurface(window);                        // update the surface -- need to do this every frame.
 
         // Wait for frame render to finish, then swap buffers and do next
-        
+
 #ifdef MULTITHREAD
         if (frameWait < 1) {
             // Swap buffers, we will render one to pixels while we're issuing draw commands to the other
@@ -324,3 +325,6 @@ int main(int argc, char * argv[])
     SDL_Quit();
     return 0;
 }
+
+#pragma comment(linker, "/subsystem:Console")
+//#pragma comment( linker, "/entry:\"main\"" )
