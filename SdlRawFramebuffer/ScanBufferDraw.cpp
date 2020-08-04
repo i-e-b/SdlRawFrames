@@ -3,8 +3,7 @@
 #include "Sort.h"
 #include "BinHeap.h"
 
-#include <stdlib.h>
-#include <iostream>
+#include <cstdlib>
 using namespace std;
 
 #define ON 0x01
@@ -24,7 +23,7 @@ using namespace std;
 ScanBuffer * InitScanBuffer(int width, int height)
 {
     auto buf = (ScanBuffer*)calloc(1, sizeof(ScanBuffer));
-    if (buf == NULL) return NULL;
+    if (buf == nullptr) return nullptr;
 
     auto sizeEstimate = width * 2;
     buf->expectedScanBufferSize = sizeEstimate;
@@ -33,29 +32,29 @@ ScanBuffer * InitScanBuffer(int width, int height)
     //       Could also do a 'region' like difference-from-last-scanline?
 
     buf->materials = (Material*)calloc(OBJECT_MAX + 1, sizeof(Material));
-    if (buf->materials == NULL) { FreeScanBuffer(buf); return NULL; }
+    if (buf->materials == nullptr) { FreeScanBuffer(buf); return nullptr; }
 
     buf->scanLines = (ScanLine*)calloc(height+1, sizeof(ScanLine)); // we use a spare line as sorting temp memory
-    if (buf->scanLines == NULL) { FreeScanBuffer(buf); return NULL; }
+    if (buf->scanLines == nullptr) { FreeScanBuffer(buf); return nullptr; }
 
     for (int i = 0; i < height + 1; i++) {
         auto scanBuf = (SwitchPoint*)calloc(sizeEstimate + 1, sizeof(SwitchPoint));
-        if (scanBuf == NULL) { FreeScanBuffer(buf); return NULL; }
+        if (scanBuf == nullptr) { FreeScanBuffer(buf); return nullptr; }
         buf->scanLines[i].points = scanBuf;
         buf->scanLines[i].count = 0;
         buf->scanLines[i].length = sizeEstimate;
     }
 
     buf->p_heap = HeapInit(OBJECT_MAX);
-    if (buf->p_heap == NULL) {
+    if (buf->p_heap == nullptr) {
         FreeScanBuffer(buf);
-        return NULL;
+        return nullptr;
     }
 
     buf->r_heap = HeapInit(OBJECT_MAX);
-    if (buf->r_heap == NULL) {
+    if (buf->r_heap == nullptr) {
         FreeScanBuffer(buf);
-        return NULL;
+        return nullptr;
     }
 
     buf->itemCount = 0;
@@ -67,16 +66,16 @@ ScanBuffer * InitScanBuffer(int width, int height)
 
 void FreeScanBuffer(ScanBuffer * buf)
 {
-    if (buf == NULL) return;
-    if (buf->scanLines != NULL) {
+    if (buf == nullptr) return;
+    if (buf->scanLines != nullptr) {
         for (int i = 0; i < buf->height; i++) {
-            if (buf->scanLines[i].points != NULL) free(buf->scanLines[i].points);
+            if (buf->scanLines[i].points != nullptr) free(buf->scanLines[i].points);
         }
         free(buf->scanLines);
     }
-    if (buf->materials != NULL) free(buf->materials);
-    if (buf->p_heap != NULL) HeapDestroy((PriorityQueue)buf->p_heap);
-    if (buf->r_heap != NULL) HeapDestroy((PriorityQueue)buf->r_heap);
+    if (buf->materials != nullptr) free(buf->materials);
+    if (buf->p_heap != nullptr) HeapDestroy((PriorityQueue)buf->p_heap);
+    if (buf->r_heap != nullptr) HeapDestroy((PriorityQueue)buf->r_heap);
     free(buf);
 }
 
@@ -114,15 +113,15 @@ void SetLine(
     int x0, int y0,
     int x1, int y1,
     int z,
-    int r, int g, int b)
+    uint32_t r, uint32_t g, uint32_t b)
 {
     if (y0 == y1) {
         return; // ignore: no scanlines would be affected
     }
 
-    uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+    uint32_t color = ((r & 0xffu) << 16u) + ((g & 0xffu) << 8u) + (b & 0xffu);
     int h = buf->height;
-    int w = buf->width;
+    //int w = buf->width;
     uint8_t isOn;
     
     if (y0 < y1) { // going down
@@ -135,7 +134,7 @@ void SetLine(
         tmp = y0; y0 = y1; y1 = tmp;
     }
 
-    int yoff = (y0 < 0) ? -y0 : 0;
+    //int yoff = (y0 < 0) ? -y0 : 0;
     int top = (y0 < 0) ? 0 : y0;
     int bottom = (y1 > h) ? h : y1;
     float grad = (float)(x0 - x1) / (float)(y0 - y1);
@@ -146,7 +145,7 @@ void SetLine(
     for (int y = top; y < bottom; y++) // skip the last pixel to stop double-counting
     {
         // add a point.
-        int x = (int)(grad * (y-y0) + x0);
+        int x = (int)(grad * static_cast<float>(y-y0) + static_cast<float>(x0));
         SetSP(buf, x, y, objectId, isOn);
     }
 
@@ -193,11 +192,11 @@ void FillCircle(ScanBuffer *buf,
 
 
 void GeneralEllipse(ScanBuffer *buf,
-    int xc, int yc, int width, int height,
-    int z, bool positive,
-    int r, int g, int b)
+                    int xc, int yc, int width, int height,
+                    int z, bool positive,
+                    uint32_t r, uint32_t g, uint32_t b)
 {
-    uint32_t color = ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+    uint32_t color = ((r & 0xffu) << 16u) + ((g & 0xffu) << 8u) + (b & 0xffu);
 
     uint8_t left = (positive) ? (ON) : (OFF);
     uint8_t right = (positive) ? (OFF) : (ON);
@@ -209,7 +208,7 @@ void GeneralEllipse(ScanBuffer *buf,
     
     auto objectId = buf->itemCount;
     SetMaterial(buf, objectId, z, color);
-    int grad = 15; // TODO: calculate (could be based on distance from centre line)
+    //int grad = 15; // TODO: calculate (could be based on distance from centre line)
 
     // Top and bottom (need to ensure we don't double the scanlines)
     for (x = 0, y = height, sigma = 2 * b2 + a2 * (1 - 2 * height); b2*x <= a2 * y; x++) {
@@ -290,7 +289,7 @@ void FillTriQuad(ScanBuffer *buf,
     int z,
     int r, int g, int b) {
     // Basically the same as triangle, but we also draw a mirror image across the xy1/xy2 plane
-    if (buf == NULL) return;
+    if (buf == nullptr) return;
     if (z < 0) return; // behind camera
 
     if (x2 == x1 && x0 == x1 && y0 == y1 && y1 == y2) return; // empty
@@ -315,7 +314,7 @@ void FillTriQuad(ScanBuffer *buf,
 }
 
 float isqrt(float number) {
-	long i;
+	unsigned long i;
 	float x2, y;
 	int j;
 	const float threehalfs = 1.5F;
@@ -323,7 +322,7 @@ float isqrt(float number) {
 	x2 = number * 0.5F;
 	y = number;
 	i = *(long*)&y;
-	i = 0x5f3759df - (i >> 1);
+	i = 0x5f3759df - (i >> 1u);
 	y = *(float*)&i;
 	j = 3;
 	while (j--) {	y = y * (threehalfs - (x2 * y * y)); }
@@ -338,13 +337,13 @@ void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, in
     // TODO: special case for w < 2
 
     // Use triquad and the gradient's normal to draw
-    float ndy = (float)(   x1 - x0  );
-    float ndx = (float)( -(y1 - y0) );
+    auto ndy = (float)(   x1 - x0  );
+    auto ndx = (float)( -(y1 - y0) );
 
     // normalise
-    float mag = isqrt((ndy*ndy) + (ndx*ndx));
-    ndx *= w * mag;
-    ndy *= w * mag;
+    float mag_w = static_cast<float>(w) * isqrt((ndy*ndy) + (ndx*ndx));
+    ndx *= mag_w;
+    ndy *= mag_w;
 
     int hdx = (int)(ndx / 2);
     int hdy = (int)(ndy / 2);
@@ -352,8 +351,8 @@ void DrawLine(ScanBuffer * buf, int x0, int y0, int x1, int y1, int z, int w, in
     // Centre points on line width 
     x0 -= hdx;
     y0 -= hdy;
-    x1 -= (int)(ndx - hdx);
-    y1 -= (int)(ndy - hdy);
+    x1 -= (int)(ndx - static_cast<float>(hdx));
+    y1 -= (int)(ndy - static_cast<float>(hdy));
 
     FillTriQuad(buf, x0, y0, x1, y1,
         x0 + (int)(ndx), y0 + (int)(ndy),
@@ -389,7 +388,7 @@ void FillTrangle(
     int z,
     int r, int g, int b)
 {
-    if (buf == NULL) return;
+    if (buf == nullptr) return;
     if (z < 0) return; // behind camera
 
     if (x0 == x1 && x1 == x2) return; // empty
@@ -433,7 +432,7 @@ void SetBackground(
 // Do this *after* rendering to pixel buffer
 void ClearScanBuffer(ScanBuffer * buf)
 {
-    if (buf == NULL) return;
+    if (buf == nullptr) return;
     buf->itemCount = 0; // reset object ids
     for (int i = 0; i < buf->height; i++)
     {
@@ -444,21 +443,21 @@ void ClearScanBuffer(ScanBuffer * buf)
 
 // blend two colors, by a proportion [0..255]
 // 255 is 100% color1; 0 is 100% color2.
-inline uint32_t Blend(int prop1, uint32_t color1, uint32_t color2) {
+inline uint32_t Blend(uint32_t prop1, uint32_t color1, uint32_t color2) {
     if (prop1 >= 255) return color1;
     if (prop1 <= 0) return color2;
 
-    int prop2 = 255 - prop1;
-    int r = prop1 * ((color1 & 0x00FF0000) >> 16);
-    int g = prop1 * ((color1 & 0x0000FF00) >> 8);
-    int b = prop1 * (color1 & 0x000000FF);
+    uint32_t prop2 = 255u - prop1;
+    uint32_t r = prop1 * ((color1 & 0x00FF0000u) >> 16u);
+    uint32_t g = prop1 * ((color1 & 0x0000FF00u) >> 8u);
+    uint32_t b = prop1 * (color1 & 0x000000FFu);
 
-    r += prop2 * ((color2 & 0x00FF0000) >> 16);
-    g += prop2 * ((color2 & 0x0000FF00) >> 8);
-    b += prop2 * (color2 & 0x000000FF);
+    r += prop2 * ((color2 & 0x00FF0000u) >> 16u);
+    g += prop2 * ((color2 & 0x0000FF00u) >> 8u);
+    b += prop2 * (color2 & 0x000000FFu);
 
     // everything needs shifting 8 bits, we've integrated it into the color merge
-    return ((r & 0xff00) << 8) + ((g & 0xff00)) + ((b >> 8) & 0xff);
+    return ((r & 0xff00u) << 8u) + ((g & 0xff00u)) + ((b >> 8u) & 0xffu);
 }
 
 // reduce display heap to the minimum by merging with remove heap
@@ -496,7 +495,7 @@ void RenderScanLine(
     BYTE* data                   // target frame-buffer
 ) {
 	auto scanLine = &(buf->scanLines[lineIndex]);
-	if (scanLine->dirty == false) return;
+	if (!scanLine->dirty) return;
 	scanLine->dirty = false;
 
     auto tmpLine = &(buf->scanLines[buf->height]);
@@ -504,7 +503,7 @@ void RenderScanLine(
     int yoff = buf->width * lineIndex;
     auto materials = buf->materials;
     auto count = scanLine->count;
-    auto width = buf->width;
+    //auto width = buf->width;
 
     // Note: sorting takes a lot of the time up. Anything we can do to improve it will help frame rates
     auto list = IterativeMergeSort(scanLine->points, tmpLine->points, count);
@@ -523,7 +522,7 @@ void RenderScanLine(
     bool on = false;
     uint32_t p = 0; // current pixel
     uint32_t color = 0; // color of current object
-    uint32_t color_under = 0; // antialiasing color
+    //uint32_t color_under = 0; // antialiasing color
     SwitchPoint current = {}; // top-most object's most recent "on" switch
     for (int i = 0; i < count; i++)
     {
@@ -565,12 +564,12 @@ void RenderScanLine(
             color = materials[current.id].color;
 
             // If there is another object underneath, we store the color for antialiasing.
-            ElementType nextObj = { 0,0,0 };
+            /*ElementType nextObj = { 0,0,0 };
             if (HeapTryFindNext(p_heap, &nextObj)) {
                 color_under = materials[nextObj.identifier].color;
             } else {
                 color_under = 0;
-            }
+            }*/
         } else {
             color = 0;
         }
@@ -600,7 +599,7 @@ void RenderBuffer(
     ScanBuffer *buf, // source scan buffer
     BYTE* data       // target frame-buffer (must match scanbuffer dimensions)
 ) {
-    if (buf == NULL || data == NULL) return;
+    if (buf == nullptr || data == nullptr) return;
 
     for (int i = 0; i < buf->height; i++) {
         RenderScanLine(buf, i, data);

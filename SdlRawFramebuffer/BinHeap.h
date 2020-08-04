@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _BinHeap_H
-#define _BinHeap_H
+#ifndef BinHeap_H
+#define BinHeap_H
 
 // This type is used for the ScanBuffer drawing SwitchPoint list
 typedef struct ElementType {

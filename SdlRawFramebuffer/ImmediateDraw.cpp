@@ -32,22 +32,22 @@ void CoverageLine(
         int v = (err + coverAdj - errOff) * ds;
         if (v > 127) v = 127;
         if (v < -127) v = -127;
-        int lv = 128 + v; // 'left' coverage,  0..255
-        int rv = 128 - v; // 'right' coverage, 0..255
+        unsigned int lv = 128 + v; // 'left' coverage,  0..255
+        unsigned int rv = 128 - v; // 'right' coverage, 0..255
 
         // set primary pixel, mixing original colour with target colour
         pixoff = (y0 * rowBytes) + (x0 * 4);
 
         //                 [ existing colour mix        ]   [ line colour mix ]
-        data[pixoff + 0] = ((data[pixoff + 0] * lv) >> 8) + ((b * rv) >> 8);
-        data[pixoff + 1] = ((data[pixoff + 1] * lv) >> 8) + ((g * rv) >> 8);
-        data[pixoff + 2] = ((data[pixoff + 2] * lv) >> 8) + ((r * rv) >> 8);
+        data[pixoff + 0] = ((data[pixoff + 0] * lv) >> 8u) + ((b * rv) >> 8u);
+        data[pixoff + 1] = ((data[pixoff + 1] * lv) >> 8u) + ((g * rv) >> 8u);
+        data[pixoff + 2] = ((data[pixoff + 2] * lv) >> 8u) + ((r * rv) >> 8u);
 
         pixoff += pairoff; // switch to the 'other' pixel
 
-        data[pixoff + 0] = ((data[pixoff + 0] * rv) >> 8) + ((b * lv) >> 8);
-        data[pixoff + 1] = ((data[pixoff + 1] * rv) >> 8) + ((g * lv) >> 8);
-        data[pixoff + 2] = ((data[pixoff + 2] * rv) >> 8) + ((r * lv) >> 8);
+        data[pixoff + 0] = ((data[pixoff + 0] * rv) >> 8u) + ((b * lv) >> 8u);
+        data[pixoff + 1] = ((data[pixoff + 1] * rv) >> 8u) + ((g * lv) >> 8u);
+        data[pixoff + 2] = ((data[pixoff + 2] * rv) >> 8u) + ((r * lv) >> 8u);
 
 
         // end of line check

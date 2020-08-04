@@ -22,21 +22,19 @@ const int SCREEN_HEIGHT = 600;
 #define WAIT_AT_END 1
 
 // Two-thread rendering stuff:
-SDL_Thread *thread = NULL; // Thread for multi-pass rendering
-SDL_mutex* gDataLock = NULL; // Data access semaphore, for the read buffer
+SDL_mutex* gDataLock = nullptr; // Data access semaphore, for the read buffer
 ScanBuffer *BufferA, *BufferB; // pair of scanline buffers. One is written while the other is read
 volatile bool quit = false; // Quit flag
 volatile bool drawDone = false; // Quit complete flag
 volatile int writeBuffer = 0; // which buffer is being written (other will be read)
 volatile int frameWait = 0; // frames waiting
-BYTE* base = NULL; // graphics base
+BYTE* base = nullptr; // graphics base
 int rowBytes = 0;
-int frameByteSize = 0;
 
 // Scanline buffer to pixel buffer rendering on a separate thread
-int RenderWorker(void* data)
+int RenderWorker(void*)
 {
-    while (base == NULL) {
+    while (base == nullptr) {
         SDL_Delay(5);
     }
     SDL_Delay(150); // delay wake up
@@ -65,8 +63,8 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 
     SetBackground(scanBuf, 10000, 50, 80, 70);
 //*
-    auto rx = (int)(sin(frame / 128.0f) * 80);
-    auto ry = (int)(-cos(frame / 128.0f) * 80);
+    auto rx = (int)(sin(frame / 128.0) * 80);
+    auto ry = (int)(-cos(frame / 128.0) * 80);
     FillTrangle(scanBuf, // this triangle alternates between cw and ccw
         230 + rx, 130 + ry,
         230, 170,
@@ -145,7 +143,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         5, 2, // width
         255, 0, 255);
     
- ///*
+ /*
     // a whole bunch of small triangles
     // as a torture test. Also wraps top/bottom
     for (int ti = 0; ti < 6000; ti++) {
@@ -167,7 +165,6 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         0, 0, 0);
 
     // test font
-    int px = 2;
     auto demo1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     auto demo2 = "Hello, world! 0123456789 !\"#$%&'()*+,-./:;<=>?`{}|~@";
     auto demo3 = "The quick brown fox jumped over the lazy dog []\\^_..";
@@ -177,7 +174,7 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
         AddGlyph(scanBuf, demo3[i], (2 + i) * 8, 36, 1, 0x77ffff);
 
         // stress-test
-        //*
+        /*
         for (int j = 0; j < 70; j++) {
             AddGlyph(scanBuf, demo1[i], (i) * 8, (j + 7) * 8 + ((i+(frame>>2))%5), 3, 0x77ffff);
             AddGlyph(scanBuf, demo1[i], (52 + i) * 8, (j + 7) * 8 + ((i+(frame>>2))%5), 15, 0xffff77);
@@ -204,10 +201,10 @@ void DrawToScanBuffer(ScanBuffer *scanBuf, int frame) {
 int main(int argc, char * argv[])
 {
     //The window we'll be rendering to
-    SDL_Window* window = NULL;
+    SDL_Window* window;
 
     //The surface contained by the window
-    SDL_Surface* screenSurface = NULL;
+    SDL_Surface* screenSurface;
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         cout << "SDL initialization failed. SDL Error: " << SDL_GetError();
@@ -218,14 +215,14 @@ int main(int argc, char * argv[])
 
     // Create window
     window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (window == NULL) {
+    if (window == nullptr) {
         cout << "Window could not be created! SDL_Error: " << SDL_GetError();
         return 1;
     }
 
     gDataLock = SDL_CreateMutex(); // Initialize lock, one reader at a time
     screenSurface = SDL_GetWindowSurface(window); // Get window surface
-    SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF)); // Fill the surface white
+    SDL_FillRect(screenSurface, nullptr, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF)); // Fill the surface white
     SDL_UpdateWindowSurface(window); // Update the surface
 
     base = (BYTE*)screenSurface->pixels;
@@ -237,7 +234,6 @@ int main(int argc, char * argv[])
     cout << "\r\nScreen format: " << SDL_GetPixelFormatName(screenSurface->format->format);
     cout << "\r\nBytesPerPixel: " << (pixBytes) << ", exact? " << (((screenSurface->pitch % pixBytes) == 0) ? "yes" : "no");
 
-    frameByteSize = w * h * pixBytes;
     int animationFrames = 1500;
 
     BufferA = InitScanBuffer(w, h);
@@ -245,7 +241,7 @@ int main(int argc, char * argv[])
 
     // run the rendering thread
 #ifdef MULTITHREAD
-    SDL_Thread* threadA = SDL_CreateThread(RenderWorker, "RenderThread", NULL);
+    SDL_Thread* threadA = SDL_CreateThread(RenderWorker, "RenderThread", nullptr);
 #endif
 
     // Used to calculate the frames per second
@@ -284,7 +280,7 @@ int main(int argc, char * argv[])
         // Event loop and frame delay
 #ifdef FRAME_LIMIT
         SDL_PumpEvents(); // Keep Win32 happy
-        long ftime = (SDL_GetTicks() - fst);
+        long ftime = static_cast<long>(SDL_GetTicks() - fst);
         if (ftime < 15) SDL_Delay(15 - ftime);
         idleTime += 15 - ftime; // indication of how much slack we have
 #endif
@@ -295,8 +291,8 @@ int main(int argc, char * argv[])
     frameWait = 100;
 
     long endTicks = SDL_GetTicks();
-    float avgFPS = animationFrames / ((endTicks - startTicks) / 1000.f);
-    float idleFraction = idleTime / (15.f*animationFrames);
+    float avgFPS = static_cast<float>(animationFrames) / (static_cast<float>(endTicks - startTicks) / 1000.f);
+    float idleFraction = static_cast<float>(idleTime) / (15.f*static_cast<float>(animationFrames));
     cout << "\r\nFPS ave = " << avgFPS << "\r\nIdle % = " << (100 * idleFraction);
 
 #ifdef MULTITHREAD
@@ -317,14 +313,13 @@ int main(int argc, char * argv[])
     FreeScanBuffer(BufferA);
     FreeScanBuffer(BufferB);
 #ifdef MULTITHREAD
-    SDL_WaitThread(threadA, NULL);
+    SDL_WaitThread(threadA, nullptr);
 #endif
     SDL_DestroyMutex(gDataLock);
-    gDataLock = NULL;
+    gDataLock = nullptr;
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
 }
 
 #pragma comment(linker, "/subsystem:Console")
-//#pragma comment( linker, "/entry:\"main\"" )

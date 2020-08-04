@@ -1,6 +1,4 @@
 #include "Sort.h"
-#include <stdlib.h>
-#include <iostream>
 
 // maximal/exhaustive sort
 inline bool cmp_other(SwitchPoint* a, int idx1, int idx2) {
@@ -25,35 +23,35 @@ inline bool cmp_other(SwitchPoint* a, int idx1, int idx2) {
 // minimal sort
 inline bool cmp(SwitchPoint* a, int idx1, int idx2) {
     // sort by position, with `on` to the left of `off`
-    auto p1 = (a[idx1].xpos << 1) + a[idx1].state;
-    auto p2 = (a[idx2].xpos << 1) + a[idx2].state;
+    auto p1 = (a[idx1].xpos << 1u) + a[idx1].state;
+    auto p2 = (a[idx2].xpos << 1u) + a[idx2].state;
     return (p1 < p2);
 }
 
-inline int cmpval(SwitchPoint p) {
-	return (p.xpos << 1) + p.state;
+inline unsigned int cmpval(SwitchPoint p) {
+	return (p.xpos << 1u) + p.state;
 }
 
 void quicksort_rec(SwitchPoint* A, int len) {
   if (len < 2) return;
- 
+
   int pivotPoint = len / 2;
-  int pivot = cmpval(A[pivotPoint]);
- 
+  unsigned int pivot = cmpval(A[pivotPoint]);
+
   int i, j;
   for (i = 0, j = len - 1; ; i++, j--) {
     //while (cmp(A, i, pivotPoint)) i++;
     //while (cmp(A, pivotPoint, j)) j--;
     while (cmpval(A[i]) < pivot) i++;
     while (cmpval(A[j]) > pivot) j--;
- 
+
     if (i >= j) break;
- 
+
     auto temp = A[i];
     A[i]     = A[j];
     A[j]     = temp;
   }
- 
+
   quicksort_rec(A, i);
   quicksort_rec(A + i, len - i);
 }
@@ -64,7 +62,7 @@ SwitchPoint* QuickSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
 }
 
 // most significant bit first in-place radix sort.
-void radsort_rec(SwitchPoint* A, int from, int to, int bit)
+void radsort_rec(SwitchPoint* A, int from, int to, unsigned int bit)
 {
 	if (!bit || to < from + 1) return;
  
@@ -85,14 +83,14 @@ void radsort_rec(SwitchPoint* A, int from, int to, int bit)
 	}
  
 	if (!(cmpval(A[leftIdx]) & bit) && leftIdx < to) leftIdx++;
-	bit >>= 1;
+	bit >>= 1u;
  
 	radsort_rec(A, from, leftIdx, bit);
 	radsort_rec(A, leftIdx, to, bit);
 }
 
 SwitchPoint* RadixSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
-	radsort_rec(source, 0, n, 1 << 12); // the bit is very sensitive to structure of 'SwitchPoint'
+	radsort_rec(source, 0, n, 1u << 12u); // the bit is very sensitive to structure of 'SwitchPoint'
     return source;
 }
 
@@ -106,15 +104,15 @@ SwitchPoint* IterativeMergeSort(SwitchPoint* source, SwitchPoint* tmp, int n) {
     auto A = arr2; // we will be flipping the array pointers around
     auto B = arr1;
 
-    for (int stride = 1; stride < n; stride <<= 1) { // doubling merge width
+    for (unsigned int stride = 1; stride < n; stride <<= 1u) { // doubling merge width
         
         // swap A and B pointers after each merge set
-        { auto tmp = A; A = B; B = tmp; }
+        { auto swp = A; A = B; B = swp; }
 
         int t = 0; // incrementing point in target array
-        for (int left = 0; left < n; left += stride << 1) {
-            int right = left + stride;
-            int end = right + stride;
+        for (uint32_t left = 0; left < n; left += stride << 1u) {
+            uint32_t right = left + stride;
+            uint32_t end = right + stride;
             if (end > n) end = n; // some merge windows will run off the end of the data array
             if (right > n) right = n; // some merge windows will run off the end of the data array
             int l = left, r = right; // the point we are scanning though the two sets to be merged.

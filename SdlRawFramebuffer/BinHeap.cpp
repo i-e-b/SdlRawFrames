@@ -1,5 +1,5 @@
 #include "binheap.h"
-#include <stdlib.h>
+#include <cstdlib>
 //#include "fatal.h"
 //#include <stdio.h>
 
@@ -16,18 +16,18 @@ PriorityQueue HeapInit(int MaxElements) {
     PriorityQueue H;
 
     if (MaxElements < MinPQSize)
-        return NULL;
+        return nullptr;
     
     H = (PriorityQueue) malloc(sizeof(struct HeapStruct));
     
-    if (H == NULL) return NULL;
+    if (H == nullptr) return nullptr;
     
     /* Allocate the array plus one extra for sentinel */
     H->Elements = (ElementType*)malloc((MaxElements + 1) * sizeof(ElementType));
     
-    if (H->Elements == NULL) {
+    if (H->Elements == nullptr) {
         free(H);
-        return NULL;
+        return nullptr;
     }
 
     H->Capacity = MaxElements;
@@ -54,10 +54,10 @@ inline bool Compare(ElementType A, ElementType B) {
 void HeapInsert(ElementType X, PriorityQueue H) {
     if (HeapIsFull(H)) { return; }
 
-    int i;
+    unsigned int i;
 
-    for (i = ++H->Size; Compare(H->Elements[i >> 1], X); i >>= 1) {
-        H->Elements[i] = H->Elements[i >> 1];
+    for (i = ++H->Size; Compare(H->Elements[i >> 1u], X); i >>= 1u) {
+        H->Elements[i] = H->Elements[i >> 1u];
     }
 
     H->Elements[i] = X;
