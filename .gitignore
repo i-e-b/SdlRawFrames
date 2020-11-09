@@ -12,3 +12,5 @@ _Resharper*
 *.vspx
 *.psess
 *.coverage
+.idea/
+cmake-build-*/

@@ -1,7 +1,5 @@
-#include "binheap.h"
+#include "BinHeap.h"
 #include <cstdlib>
-//#include "fatal.h"
-//#include <stdio.h>
 
 #define MinPQSize (10)
 #define MinData (-32767)

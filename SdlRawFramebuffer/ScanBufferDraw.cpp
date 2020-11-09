@@ -521,7 +521,7 @@ void RenderScanLine(
 
     bool on = false;
     uint32_t p = 0; // current pixel
-    uint32_t color = 0; // color of current object
+    uint32_t c=0,color = 0; // color of current object
     //uint32_t color_under = 0; // antialiasing color
     SwitchPoint current = {}; // top-most object's most recent "on" switch
     for (int i = 0; i < count; i++)
@@ -534,14 +534,18 @@ void RenderScanLine(
         if (sw.xpos > p) { // render up to this switch point
             if (on) {
                 auto max = (sw.xpos > end) ? end : sw.xpos;
+                uint32_t* d = (uint32_t*)(data + ((p+yoff) * sizeof(uint32_t)));
                 for (; p < max; p++) {
-                    // This AA strategy will never work. Needs re-thinking
-                    /*if (current.fade < 15) current.fade++;
-                    auto c = Blend(15 + (current.fade << 4), color, color_under);
-                    ((uint32_t*)data)[p + yoff] = c;*/
+                    // -- 'fade rate'
+                    //if (current.fade < 15) current.fade++;
 
+                    // -- smear / blur test
+                    //c = Blend(128, color, c); // smearing blur. `prop1` Should lower for flatter angles
+                    //*(d++) = c;
 
-                    ((uint32_t*)data)[p + yoff] = color;
+                    // -- plain:
+                    *(d++) = color;
+
                 } // draw pixels up to the point
             } else p = sw.xpos; // skip direct to the point
         }
