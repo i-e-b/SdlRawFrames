@@ -7,8 +7,8 @@
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
-      <configuration PROFILE_NAME="Release" CONFIG_NAME="Release" />
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" ENABLED="true" />
+      <configuration PROFILE_NAME="Release" CONFIG_NAME="Release" ENABLED="true" />
     </configurations>
   </component>
   <component name="ChangeListManager">
@@ -21,7 +21,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="MacroExpansionManager">
     <option name="directoryName" value="v0ebmf1o" />
   </component>
@@ -33,22 +33,12 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="settings.editor.selected.configurable" value="CMakeSettings" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="SdlRawFramebuffer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SdlRawFramebuffer" TARGET_NAME="SdlRawFramebuffer" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="SdlRawFramebuffer" RUN_TARGET_NAME="SdlRawFramebuffer">
+    <configuration name="SdlRawFramebuffer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="SdlRawFramebuffer" TARGET_NAME="SdlRawFramebuffer" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="SdlRawFramebuffer" RUN_TARGET_NAME="SdlRawFramebuffer">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
   </component>
@@ -61,37 +51,16 @@
       <option name="presentableId" value="Default" />
       <updated>1596529628903</updated>
       <workItem from="1596529630524" duration="4211000" />
-      <workItem from="1596538305731" duration="3299000" />
+      <workItem from="1596538305731" duration="4698000" />
+      <workItem from="1603292497485" duration="2043000" />
+      <workItem from="1604930788262" duration="18000" />
+      <workItem from="1604930823431" duration="1897000" />
+      <workItem from="1608035260662" duration="25000" />
+      <workItem from="1608035299935" duration="736000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="-1515" y="197" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1596538832333">
-      <screen x="-1920" y="0" width="1920" height="1080" />
-    </state>
-    <state x="-1515" y="197" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596538832333" />
-    <state width="1877" height="295" key="GridCell.Tab.0.bottom" timestamp="1596541502720">
-      <screen x="-1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1877" height="295" key="GridCell.Tab.0.bottom/0.0.1920.1040/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596541502720" />
-    <state width="1877" height="295" key="GridCell.Tab.0.center" timestamp="1596541502720">
-      <screen x="-1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1877" height="295" key="GridCell.Tab.0.center/0.0.1920.1040/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596541502720" />
-    <state width="1877" height="295" key="GridCell.Tab.0.left" timestamp="1596541502720">
-      <screen x="-1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1877" height="295" key="GridCell.Tab.0.left/0.0.1920.1040/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596541502720" />
-    <state width="1877" height="295" key="GridCell.Tab.0.right" timestamp="1596541502720">
-      <screen x="-1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1877" height="295" key="GridCell.Tab.0.right/0.0.1920.1040/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596541502720" />
-    <state x="-1263" y="232" key="SettingsEditor" timestamp="1596538903186">
-      <screen x="-1920" y="0" width="1920" height="1080" />
-    </state>
-    <state x="-1263" y="232" key="SettingsEditor/0.0.1920.1040/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596538903186" />
   </component>
 </project>

@@ -523,7 +523,7 @@ void RenderScanLine(
     uint32_t p = 0; // current pixel
     uint32_t c=0,color = 0; // color of current object
     //uint32_t color_under = 0; // antialiasing color
-    SwitchPoint current = {}; // top-most object's most recent "on" switch
+    SwitchPoint current; // top-most object's most recent "on" switch
     for (int i = 0; i < count; i++)
     {
         SwitchPoint sw = list[i];
@@ -534,7 +534,7 @@ void RenderScanLine(
         if (sw.xpos > p) { // render up to this switch point
             if (on) {
                 auto max = (sw.xpos > end) ? end : sw.xpos;
-                uint32_t* d = (uint32_t*)(data + ((p+yoff) * sizeof(uint32_t)));
+                auto d = (uint32_t*)(data + ((p+yoff) * sizeof(uint32_t)));
                 for (; p < max; p++) {
                     // -- 'fade rate'
                     //if (current.fade < 15) current.fade++;

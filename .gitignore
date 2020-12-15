@@ -3,6 +3,7 @@ Debug/
 Release/
 CMakeFiles/
 cmake-build-release/
+cmake-build-debug/
 *.exe
 *.pdb
 *.ilk
